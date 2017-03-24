@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #efefef;
+        }
+        .heatmap {
+            width: 840px;
+            height: 400px;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<!-- width 和 height 属性 不可修改 -->
+<div class="heatmap"></div>
+
+<!--<div style="position: absolute; right: 10px; top: 10px;">-->
+<!--<img src="../../doc/3.png" style="">-->
+<!--</div>-->
+
+<script type="text/javascript" src="../../doc/heatmap.js"></script>
+<script>
+    window.onload = function () {
+        function generateRandomData(len) {
+            var points = [];
+            var max = 0;
+            var width = 840;
+            var height = 400;
+            while (len--) {
+                var val = Math.floor(Math.random() * 255);
+                var radius = Math.floor(Math.random() * 40);
+                max = Math.max(max, val);
+                var point = {
+                    x: Math.floor(Math.random() * width),
+                    y: Math.floor(Math.random() * height),
+                    value: val,
+                    radius: radius
+                };
+                points.push(point);
+            }
+            var data = {max: max, data: points};
+            return data;
+        }
+        // 300  26ms - 36ms
+        // 7000 93ms - 101ms
+        console.time('heatmap');
+        var heatmapInstance = h337.create({container: document.querySelector('.heatmap')});
+        var data = generateRandomData(300);
+        heatmapInstance.setData(data);
+        console.timeEnd('heatmap');
+    }
+</script>
+
+</body>
+</html>

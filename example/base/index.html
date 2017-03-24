@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #efefef;
+        }
+        #canvas {
+            width: 840px;
+            height: 400px;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+<div id="canvas"></div>
+<script src="../../dist/heatmap.js"></script>
+<script>
+    var options = {},
+        container = document.getElementById('canvas'),
+        data = {nodes: [], lines: []};
+
+    // 随机生成节点
+    function generateRandomData(len) {
+        var points = [];
+        var max = 0;
+        var width = 840;
+        var height = 400;
+        while (len--) {
+            var weight = Math.floor(Math.random() * 255);
+            var radius = Math.floor(Math.random() * 40);
+            var point = {
+                x: Math.floor(Math.random() * width),
+                y: Math.floor(Math.random() * height),
+                weight: weight,
+                radius: radius
+            };
+            points.push(point);
+        }
+        return points;
+    }
+    // 300  24ms - 34ms
+    // 7000 80ms - 97ms
+    console.time('heatmap');
+    data.nodes = generateRandomData(300);
+    heatmap.instance(options, container, data);
+    console.timeEnd('heatmap');
+</script>
+</body>
+</html>
