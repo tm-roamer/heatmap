@@ -4,9 +4,10 @@
   "description": "heatmap.js is a plugin for canvas chart",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "./node_modules/.bin/rollup src/heatmap.js --format umd --name 'heatmap'  --output dist/heatmap.js",
-    "start": "npm run build && node ./build/build.js"
+    "merge": "./node_modules/.bin/rollup src/heatmap.js --format umd --name 'heatmap'  --output dist/heatmap.js",
+    "uglify": "./node_modules/.bin/uglifyjs dist/heatmap.js -o dist/heatmap.min.js",
+    "watch": "npm run merge && node ./build/watch.js",
+    "build": "npm run merge && npm run uglify"
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,7 @@
   },
   "homepage": "https://github.com/tm-roamer/heatmap#readme",
   "devDependencies": {
-    "rollup": "^0.41.6"
+    "rollup": "^0.41.6",
+    "uglify-js": "^2.8.15"
   }
 }
