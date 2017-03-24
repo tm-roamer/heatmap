@@ -93,6 +93,7 @@ HeatMap.prototype = {
 };
 
 export default {
+    version: "1.0.0",
     instance: function (options, container, originData) {
         if (container && !container.hasAttribute(CONST.HM_ID)) {
             // 初始化监听

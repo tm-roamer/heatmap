@@ -401,6 +401,7 @@ HeatMap.prototype = {
 };
 
 var heatmap = {
+    version: "1.0.0",
     instance: function (options, container, originData) {
         if (container && !container.hasAttribute(CONSTANT.HM_ID)) {
             // 初始化监听
