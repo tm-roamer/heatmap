@@ -7,7 +7,8 @@ heatmap.js is a plugin for canvas chart 一个基于canvas的绘制热图插件
 
 ### 预览图
 
-![github](https://github.com/tm-roamer/heatmap/blob/master/doc/demo.png?raw=true "demo")
+<!--![github](https://github.com/tm-roamer/heatmap/blob/master/doc/demo.png=200x200?raw=true "demo")-->
+<img src="https://github.com/tm-roamer/heatmap/blob/master/doc/demo.png" width=256 height=256 />
 
 ### 安装说明
 
