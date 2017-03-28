@@ -28,7 +28,7 @@ var view = {
         return paletteCtx.getImageData(0, 0, 256, 1).data;
     },
     // 节点模板
-    getPointTemplate: function (radius, blurFactor) {
+    getNodeTemplate: function (radius, blurFactor) {
         var tplCanvas = document.createElement('canvas');
         var tplCtx = tplCanvas.getContext('2d');
         var x = radius;
@@ -49,10 +49,32 @@ var view = {
         }
         return tplCanvas;
     },
+    // 注意力模板
+    getAttentionTemplate: function(width, height) {
+        var tplCanvas = document.createElement('canvas');
+        var tplCtx = tplCanvas.getContext('2d');
+        tplCanvas.width = width;
+        tplCanvas.height = height;
+        var midW = Math.round(width / 2),
+            midH = Math.round(height / 2);
+        // 中间 到 上
+        var gradient1 = tplCtx.createLinearGradient(midW, midH, midW, 0);
+        gradient1.addColorStop(0, 'rgba(0,0,0,1)');
+        gradient1.addColorStop(1, 'rgba(0,0,0,0)');
+        tplCtx.fillStyle = gradient1;
+        tplCtx.fillRect(0, 0, width, midH);
+        // 中间 到 下
+        var gradient2 = tplCtx.createLinearGradient(midW, midH, midW, height);
+        gradient2.addColorStop(0, 'rgba(0,0,0,1)');
+        gradient2.addColorStop(1, 'rgba(0,0,0,0)');
+        tplCtx.fillStyle = gradient2;
+        tplCtx.fillRect(0, midH, width, midH);
+        return tplCanvas;
+    },
     // 节点上色
-    colorize: function () {
-        var colorPalette = this.colorPalette,
-            boundaries = utils.getBoundaries(this.boundaries, this.opt._width, this.opt._height);
+    colorize: function (boundaries) {
+        var colorPalette = this.colorPalette;
+        boundaries = boundaries || utils.getBoundaries(this.boundaries, this.opt._width, this.opt._height);
         // 取得图像
         var img = this.shadowCtx.getImageData(boundaries.x, boundaries.y, boundaries.w, boundaries.h);
         var imgData = img.data;
@@ -73,24 +95,26 @@ var view = {
                 imgData[i] = alpha;                         // alpha
             }
         }
-        // img.data = imgData;
         this.ctx.putImageData(img, boundaries.x, boundaries.y);
     },
+    // 清除
     clear: function () {
         this.shadowCtx.clearRect(0, 0, this.opt._width, this.opt._height);
         this.ctx.clearRect(0, 0, this.opt._width, this.opt._height);
     },
+    // 渲染
     render: function () {
-        var self = this,
-            nodes = this.data.nodes;
-        if (Array.isArray(nodes)) {
-            var tpl,
-                shadowCtx = this.shadowCtx,
-                nodeBlur = this.opt.nodeBlur;
+        var tpl, self = this,
+            shadowCtx = this.shadowCtx,
+            nodeBlur = this.opt.nodeBlur,
+            nodes = this.data.nodes,
+            attention = this.data.attention;
+
+        if (Array.isArray(nodes) && nodes.length > 0) {
             nodes.forEach(function(node) {
                 // 缓存模板
                 if (!self._templates[node.radius]) {
-                    self._templates[node.radius] = tpl = view.getPointTemplate(node.radius, nodeBlur);
+                    self._templates[node.radius] = tpl = view.getNodeTemplate(node.radius, nodeBlur);
                 } else {
                     tpl = self._templates[node.radius];
                 }
@@ -102,25 +126,29 @@ var view = {
             // 给节点上色
             view.colorize.call(this);
         }
+
+        if (Array.isArray(attention) && attention.length > 0) {
+            attention.forEach(function(node) {
+                tpl = view.getAttentionTemplate(self.opt._width, node.height);
+                shadowCtx.globalAlpha = node.alpha;
+                shadowCtx.drawImage(tpl, 0, node.y);
+            });
+            // 给节点上色
+            view.colorize.call(this, {x: 0, y: 0, w: this.opt._width, h: this.opt._height});
+        }
     },
+    // 设置样式
     setContainerStyle: function () {
         var opt = this.opt,
             canvas = this.canvas,
             shadowCanvas = this.shadowCanvas,
             container = this.container;
-
         canvas.classList.add(CONST.HM_CANVAS);
-        canvas.style.cssText = shadowCanvas.style.cssText = 'position:absolute;left:0;top:0;';
-        container.style.position = 'relative';
-
         var computed = getComputedStyle(container) || {};
         opt._width = canvas.width = shadowCanvas.width = (computed.width.replace(/px/, ''));
         opt._height = canvas.height = shadowCanvas.height = (computed.height.replace(/px/, ''));
-
-        if (opt.backgroundColor) {
-            canvas.style.backgroundColor = opt.backgroundColor;
-        }
     },
+    // 初始化
     init: function () {
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
@@ -130,21 +158,8 @@ var view = {
         // 根据节点半径, 缓存节点模板
         this._templates = {};
         view.setContainerStyle.call(this);
+        this.container.classList.add(CONST.HM_CONTAINER);
         this.container.appendChild(this.canvas);
-    },
-    searchUp: function (node, className) {
-        if (!node || node === document.body || node === document) return undefined;   // 向上递归到顶就停
-        if (node.classList.contains(className)) return node;
-        return this.searchUp(node.parentNode, className);
-    },
-    getOffset: function (node, offset, parent) {
-        if (!parent)
-            return node.getBoundingClientRect();
-        offset = offset || {top: 0, left: 0};
-        if (node === null || node === parent) return offset;
-        offset.top += node.offsetTop;
-        offset.left += node.offsetLeft;
-        return this.getOffset(node.offsetParent, offset, parent);
     }
 };
 

@@ -1,0 +1,73 @@
+/* 热图样式 */
+body.hm-user-select {
+    user-select: none;
+}
+/* 热图容器 */
+.hm-container {
+    position: relative;
+}
+/* 缩略图容器 */
+.hm-mini-container {
+    position:relative;
+    cursor: pointer;
+}
+/* 缩略图热图画布 */
+.hm-mini-canvas {
+    position:absolute;
+    left:0;
+    top:0;
+    z-index: 1;
+}
+/* 热图画布 */
+.hm-canvas {
+    position:absolute;
+    left:0;
+    top:0;
+    z-index: 1;
+}
+/* 缩略图的遮罩 */
+.hm-mini-mask {
+    position: absolute;
+    z-index: 2;
+    background: #444444;
+    opacity: 0.45;
+}
+/* 缩略图的上遮罩 */
+.hm-mini-mask-top {
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 0;
+}
+/* 缩略图的右遮罩 */
+.hm-mini-mask-right {
+    top: 0;
+    left: 0;
+    width: 2px;
+}
+/* 缩略图的下遮罩 */
+.hm-mini-mask-bottom {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+/* 缩略图的左遮罩 */
+.hm-mini-mask-left {
+    top: 0;
+    right: 0;
+    width: 2px;
+}
+/* 缩略图滑块*/
+.hm-mini-slider {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    top: 0;
+    z-index: 3;
+    min-height: 30px;
+    border: 1px solid #fff;
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,.26);
+    cursor: pointer;
+    box-sizing: border-box;
+}

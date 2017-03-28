@@ -24,6 +24,25 @@ export default {
         };
         this.throttle(now);
     },
+    getSliderCoordY: function (y, h) {
+        var maxHeight = this.mini.canvas.height;
+        if (y < 0) {
+            return 0;
+        }
+        if (y + h > maxHeight) {
+            return maxHeight - h;
+        }
+        return y;
+    },
+    getHeight: function (height) {
+        if (height > this.opt._height) {
+            return this.opt._height;
+        }
+        if (height < CONST.HM_NODE_HEIGHT_MIN) {
+            return CONST.HM_NODE_HEIGHT_MIN;
+        }
+        return height;
+    },
     getWeight: function (weight) {
         if (weight > CONST.HM_NODE_WEIGHT_MAX) {
             return CONST.HM_NODE_WEIGHT_MAX;
@@ -61,6 +80,15 @@ export default {
             boundaries.h = rectH;
         }
         return boundaries;
+    },
+    resetBoundaries: function() {
+        // 重新初始边界
+        this.boundaries = {
+            x: CONST.HM_BOUNDARIES_X_Y,
+            y: CONST.HM_BOUNDARIES_X_Y,
+            w: 0,
+            h: 0
+        };
     },
     getBoundaries: function(boundaries, maxWidth, maxHeight) {
         if (boundaries.x < 0) {

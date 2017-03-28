@@ -3,28 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <title></title>
+    <link rel="stylesheet" type="text/css" href="../../dist/heatmap.css"/>
+    <script src="../../dist/heatmap.js"></script>
     <style>
         html, body {
             margin: 0;
             padding: 0;
-            /*background: #efefef;*/
         }
-        #canvas {
-            width: 840px;
+        #mini {
+            position: absolute;
+            left: 900px;
+            top: 10px;
+            width: 110px;
             height: 400px;
-            /*background: #fff;*/
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        #heatmap-container {
+            width: 860px;
+            height: 400px;
+            margin-top: 10px;
+            margin-left: 10px;
+            border: 2px solid #323232;
+            border-radius: 5px;
+            overflow: auto;
+        }
+        #heatmap {
+            width: 840px;
+            height: 1400px;
         }
     </style>
 </head>
 <body>
-<div id="canvas"></div>
-<script src="../../dist/heatmap.js"></script>
-<script>
-    var options = {},
-        container = document.getElementById('canvas'),
-        data = {nodes: [], lines: []};
 
-    // 随机生成节点
+<!-- 缩略图 -->
+<div id="mini"></div>
+
+<!-- 绘制热图画布 -->
+<div id="heatmap-container">
+    <div id="heatmap"></div>
+</div>
+
+
+<script>
+    var options = {
+            outerContainer: '#heatmap-container',
+            mini: {
+                enabled: true,
+                el: '#mini',
+                onDragStart: function(event) {
+
+                },
+                onDrag: function(event) {
+
+                },
+                onDragEnd: function(event) {
+
+                },
+                onClick: function(event) {
+
+                }
+            }
+        },
+        container = document.getElementById('heatmap'),
+        data = {
+            nodes: [],
+            lines: [],
+            attention: []
+        };
+
+    // 随机生成节点(点击热图)
     function generateRandomData(len) {
         var points = [];
         var max = 0;
@@ -43,12 +91,31 @@
         }
         return points;
     }
+
+    // 随机生成节点(注意力热图)
+    function generateRandomAttentionData(len) {
+        var points = [];
+        while (len--) {
+            var y = Math.floor(Math.random() * 1400);
+            var weight = Math.floor(Math.random() * 255);
+            var height = Math.floor(Math.random() * 200+100);
+            var point = {
+                y: y,
+                weight: weight,
+                height: height
+            };
+            points.push(point);
+        }
+        return points;
+    }
+
     // 300  24ms - 34ms
     // 7000 80ms - 97ms
-    console.time('heatmap');
-    data.nodes = generateRandomData(300);
+//    console.time('heatmap');
+//    data.nodes = generateRandomData(300);
+    data.attention = generateRandomAttentionData(10);
     heatmap.instance(options, container, data);
-    console.timeEnd('heatmap');
+//    console.timeEnd('heatmap');
 </script>
 </body>
 </html>

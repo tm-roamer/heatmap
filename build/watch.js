@@ -26,3 +26,4 @@ fs.watchFile(basePath + '/handleEvent.js', options, watch);
 fs.watchFile(basePath + '/heatmap.js', options, watch);
 fs.watchFile(basePath + '/utils.js', options, watch);
 fs.watchFile(basePath + '/view.js', options, watch);
+fs.watchFile(basePath + '/thumbnail.js', options, watch);

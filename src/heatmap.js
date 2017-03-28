@@ -4,6 +4,7 @@ import {CONSTANT as CONST, globalConfig} from './config';
 import cache from './cache';
 import utils from './utils';
 import view from './view';
+import thumbnail from './thumbnail';
 import handleEvent from './handleEvent';
 
 function HeatMap(options, container, originData, number) {
@@ -13,24 +14,32 @@ function HeatMap(options, container, originData, number) {
 HeatMap.prototype = {
     constructor: HeatMap,
     init: function(options, container, originData, number) {
-        this.number = number;                           // 拖拽对象的编号
-        this.autoIncrement = 0;                         // 节点的自增主键
+        this._number = number;                          // 编号
         this.opt = utils.extend(globalConfig, options); // 配置项
         this.container = container;                     // 容器DOM
-        this.boundaries = {                             // 绘制边界
-            x: CONST.HM_BOUNDARIES_X_Y,
-            y: CONST.HM_BOUNDARIES_X_Y,
-            w: 0,
-            h: 0
-        };
+        utils.resetBoundaries.call(this);               // 重置绘制边界
         view.init.call(this);                           // 初始渲染的视图层canvas
         this.data = this.setData(originData);           // 渲染数据
+        if (this.opt.mini.enabled) {
+            this.mini = {
+                ctx: null,
+                canvas: null,
+                container: null,
+                slider: null,
+                mask: {
+                    top: null,
+                    right: null,
+                    bottom: null,
+                    left: null
+                }
+            };
+            thumbnail.init.call(this);                  // 初始化缩略图
+        }
         this.draw();
     },
     destroy: function() {
         // 基础变量
-        delete this.number;
-        delete this.autoIncrement;
+        delete this._number;
         delete this.opt;
         delete this.container;
         delete this.originData;
@@ -43,17 +52,17 @@ HeatMap.prototype = {
         delete this.boundaries;
         delete this.colorPalette;
         delete this._templates;
+        // 缩略图
+        delete this.mini;
     },
     setData: function (originData) {
         var self = this,
-            data = {nodes: [], lines: []};
+            data = {nodes: [], lines: [], attention: []};
         if (!originData) return data;
-        // 缓存原始数据
-        this.originData = originData;
+        this.originData = originData;                   // 缓存原始数据
         if (Array.isArray(originData.nodes)) {
             originData.nodes.forEach(function (node) {
                 data.nodes.push({
-                    id: self.number + '-' + (++self.autoIncrement),
                     x: node.x,                              // 坐标: x
                     y: node.y,                              // 坐标: y
                     weight: utils.getWeight(node.weight),   // 权重: 0 - 255
@@ -65,6 +74,18 @@ HeatMap.prototype = {
             });
         }
         if (Array.isArray(originData.lines)) {}
+        if (Array.isArray(originData.attention)) {
+            originData.attention.forEach(function (node) {
+                data.attention.push({
+                    y: node.y,                                       // 坐标: y
+                    height: utils.getHeight.call(self, node.height), // 高度: 默认 40
+                    weight: utils.getWeight(node.weight),            // 权重: 0 - 255
+                    alpha: utils.getAlpha(node.weight),              // 透明度: 0 - 1
+                });
+                // 设置边界
+                // utils.setBoundaries(node.x, node.y, node.radius, self.boundaries);
+            });
+        }
         return data;
     },
     load: function(data) {
@@ -73,27 +94,18 @@ HeatMap.prototype = {
     },
     draw: function() {
         this.clear();
-        view.render.call(this);
-        // 重新初始边界
-        this.boundaries = {
-            x: CONST.HM_BOUNDARIES_X_Y,
-            y: CONST.HM_BOUNDARIES_X_Y,
-            w: 0,
-            h: 0
-        };
+        view.render.call(this);        // 画布
+        thumbnail.render.call(this);   // 缩略图
+        utils.resetBoundaries.call(this);
     },
     clear: function() {
         view.clear.call(this);
-    },
-    getDom2Obj: function(dom) {
-        var container = view.searchUp(dom, CONST.HM_CONTAINER);     // 获取容器
-        if (container)
-            return cache.get(container.getAttribute(CONST.HM_ID));  // 获取拖拽对象
+        thumbnail.clear.call(this);
     }
 };
 
 export default {
-    version: "1.0.0",
+    version: "1.0.2",
     instance: function (options, container, originData) {
         if (container && !container.hasAttribute(CONST.HM_ID)) {
             // 初始化监听
@@ -106,12 +118,15 @@ export default {
             return cache.set(new HeatMap(options, container, originData, index));
         }
     },
-    destroy: function (heatmap) {
-        if (heatmap) {
-            heatmap.container.removeAttribute(DK_ID);
-            cache.remove(heatmap);
-            heatmap.destroy();
-            heatmap = null;
+    destroy: function (obj) {
+        if (obj) {
+            obj.container.removeAttribute(CONST.HM_ID);
+            cache.remove(obj);
+            obj.destroy();
+            obj = null;
+        }
+        if (cache.arr == 0) {
+            handleEvent.globalUnbind();
         }
     }
 };
