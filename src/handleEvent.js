@@ -17,12 +17,14 @@ var handleEvent = {
         document.addEventListener('mousedown', this.mouseDown, false);
         document.addEventListener('mousemove', this.mouseMove, false);
         document.addEventListener('mouseup', this.mouseUp, false);
+        document.addEventListener('click', this.click, false);
         this.isbind = true;
     },
     globalUnbind: function () {
         document.removeEventListener('mousedown', this.mouseDown, false);
         document.removeEventListener('mousemove', this.mouseMove, false);
         document.removeEventListener('mouseup', this.mouseUp, false);
+        document.removeEventListener('click', this.click, false);
         this.isbind = false;
     },
     mouseDown: function (event) {
@@ -43,17 +45,10 @@ var handleEvent = {
         if (!handleEvent.isDrag) return;
         // 函数节流
         if (!utils.throttle(new Date().getTime())) return;
-        // 计算坐标
-        var heatmap = handleEvent.heatmap,
-            offset = heatmap.mini.container.getBoundingClientRect();
-        var h = utils.getComputedWH(heatmap.mini.slider).height;
-        var y = event.pageY - handleEvent.offsetY - offset.top;
-        // 移动滑块
-        thumbnail.move.call(heatmap, {y: y, h: h});
-        // 回调函数(联动通过回调函数来解决)
-        var scale = y / heatmap.mini.canvas.height;
-        var scrollTop = scale * handleEvent.heatmap.canvas.height;
-        handleEvent.heatmap.opt.mini.onDrag.call(handleEvent.heatmap, event, scrollTop);
+        // 联动
+        handleEvent.linkage.call(handleEvent.heatmap, event.pageY, handleEvent.offsetY);
+        // 回调
+        handleEvent.heatmap.opt.mini.onDrag.call(handleEvent.heatmap, event);
     },
     mouseUp: function (event) {
         // 回调函数
@@ -65,6 +60,37 @@ var handleEvent = {
         delete handleEvent.isDrag;
         delete handleEvent.offsetX;
         delete handleEvent.offsetY;
+    },
+    click: function (event) {
+        var target = event.target;
+        if (target.classList.contains(CONST.HM_MINI_SLIDER)) return;
+        // 点击缩略图
+        var miniContainer = handleEvent.searchUp(target, CONST.HM_MINI_CONTAINER);
+        if (miniContainer) {
+            // 移动滑块
+            var heatmap = cache.get(miniContainer.getAttribute(CONST.HM_ID) * 1);
+            // 联动
+            handleEvent.linkage.call(heatmap, event.pageY);
+            // 回调
+            heatmap.opt.mini.onClick.call(heatmap, event);
+        }
+    },
+    searchUp: function (node, className) {
+        if (!node || node === document.body || node === document) return undefined;   // 向上递归到顶就停
+        if (node.classList.contains(className)) return node;
+        return this.searchUp(node.parentNode, className);
+    },
+    // 联动(缩略图和热图画布联动)
+    linkage: function(pageY, offsetY) {
+        // 计算缩略图容器坐标
+        var offset = this.mini.container.getBoundingClientRect();
+        // 移动滑块
+        var y  = thumbnail.move.call(this, {
+            y: pageY - (offsetY || 0) - offset.top
+        });
+        // 联动热图画布
+        var scale = y / this.mini.canvas.height;
+        this.outerContainer.scrollTop = scale * this.canvas.height;
     }
 };
 

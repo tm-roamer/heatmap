@@ -24,23 +24,6 @@ var thumbnail = {
             mini.container.appendChild(fragment);
         }
     },
-    setContainerStyle: function(mini, num) {
-        // 设置宽高样式
-        var computed = utils.getComputedWH(mini.container);
-        mini.canvas.width = computed.width;
-        mini.canvas.height = computed.height;
-        mini.canvas.classList.add(CONST.HM_MINI_CANVAS);
-        mini.container.classList.add(CONST.HM_MINI_CONTAINER);
-        mini.container.setAttribute(CONST.HM_ID, num);
-    },
-    setSliderHeight() {
-        var mini = this.mini,
-            outerContainer = this.outerContainer;
-        var outerHeight = utils.getComputedWH(outerContainer).height;
-        // 外容器的高度即为分屏的显示高度
-        var height =  outerHeight / this.canvas.height * mini.canvas.height;
-        thumbnail.move.call(this, {y: 0, h: height});
-    },
     createSlider: function(mini, fragment, num) {
         var slider = mini.slider = document.createElement('div');
         slider.setAttribute(CONST.HM_ID, num);
@@ -61,24 +44,52 @@ var thumbnail = {
         fragment.appendChild(maskBottom);
         fragment.appendChild(maskLeft);
     },
-    move: function(coord) {
-        if (!this && !this.mini) return;
+    setContainerStyle: function(mini, num) {
+        // 设置宽高样式
+        var computed = utils.getComputedWH(mini.container);
+        mini.canvas.width = computed.width;
+        mini.canvas.height = computed.height;
+        mini.canvas.classList.add(CONST.HM_MINI_CANVAS);
+        mini.container.classList.add(CONST.HM_MINI_CONTAINER);
+        mini.container.setAttribute(CONST.HM_ID, num);
+    },
+    setSliderHeight() {
         var mini = this.mini,
             miniOption = this.opt.mini,
-            maxHeight = this.mini.canvas.height;
+            sliderMinHeight = miniOption.sliderMinHeight,
+            outerContainer = this.outerContainer,
+            outerHeight = utils.getComputedWH(outerContainer).height;
+        // 外容器的高度即为分屏的显示高度
+        var height =  outerHeight / this.canvas.height * mini.canvas.height;
+        // 限制最小高度
+        if (height < sliderMinHeight) {
+            height = sliderMinHeight;
+        }
+        thumbnail.move.call(this, {y: 0, h: height});
+    },
+    move: function(coord) {
+        if (!this && !this.mini) return;
+        var y = coord.y = Math.ceil(coord.y),
+            mini = this.mini,
+            miniOption = this.opt.mini,
+            maxHeight = mini.canvas.height;
+        coord.h = coord.h || parseInt(mini.slider.style.height);
         // 计算尺寸
         if (coord.y <= 0) {
-            coord.y = 0 + miniOption.sliderPaddingTop;
+            y = 0;
+            coord.y = miniOption.sliderPaddingTop;
         }
         if (coord.y + coord.h >= maxHeight) {
-            coord.y = maxHeight - coord.h - miniOption.sliderPaddingBottom;
+            y = maxHeight - coord.h;
+            coord.y = y - miniOption.sliderPaddingBottom;
         }
         // 滑块, 遮罩
-        mini.slider.style.cssText = 'height:'+coord.h+ 'px;top:' + coord.y + 'px';
+        mini.slider.style.cssText = 'height:' + coord.h + 'px;top:' + coord.y + 'px';
         mini.mask.top.style.cssText = 'height:' + coord.y + 'px';
         mini.mask.right.style.cssText = 'height:' +coord.h + 'px;top:' + coord.y + 'px';
         mini.mask.bottom.style.cssText = 'top:' + (coord.y + coord.h) + 'px';
         mini.mask.left.style.cssText = 'height:' + coord.h + 'px;top:' + coord.y + 'px';
+        return y;
     },
     clear: function () {
         this.mini.ctx.clearRect(0, 0, this.opt._width, this.opt._height);

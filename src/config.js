@@ -40,6 +40,7 @@ export var globalConfig = {
         1.0: "rgb(255, 0, 0)"
     },
     mini: {
+        sliderMinHeight: 30,                        // 滑块的最小高度
         sliderPaddingTop: 2,                        // 滑块滑到顶部的空隙距离
         sliderPaddingBottom: 2,                     // 滑块滑到底部的空隙距离
         enabled: true,                              // 是否启用缩略图

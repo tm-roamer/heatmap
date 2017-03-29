@@ -75,8 +75,8 @@ HeatMap.prototype = {
                 data.nodes.push({
                     x: node.x,                              // 坐标: x
                     y: node.y,                              // 坐标: y
-                    weight: utils.getWeight(node.weight),   // 权重: 0 - 255
-                    alpha: utils.getAlpha(node.weight),     // 透明度: 0 - 1
+                    weight: utils.getNodeWeight(node.weight),   // 权重: 0 - 255
+                    alpha: utils.getNodeAlpha(node.weight),     // 透明度: 0 - 1
                     radius: node.radius                     // 半径: 默认 40
                 });
                 // 设置边界
@@ -88,9 +88,9 @@ HeatMap.prototype = {
             originData.attention.forEach(function (node) {
                 data.attention.push({
                     y: node.y,                                       // 坐标: y
-                    height: utils.getHeight.call(self, node.height), // 高度: 默认 40
-                    weight: utils.getWeight(node.weight),            // 权重: 0 - 255
-                    alpha: utils.getAlpha(node.weight),              // 透明度: 0 - 1
+                    height: utils.getNodeHeight.call(self, node.height), // 高度: 默认 40
+                    weight: utils.getNodeWeight(node.weight),            // 权重: 0 - 255
+                    alpha: utils.getNodeAlpha(node.weight),              // 透明度: 0 - 1
                 });
                 // 设置边界
                 // utils.setBoundaries(node.x, node.y, node.radius, self.boundaries);
@@ -111,6 +111,12 @@ HeatMap.prototype = {
     clear: function() {
         view.clear.call(this);
         thumbnail.clear.call(this);
+    },
+    linkage: function(scrollTop) {
+        // 联动缩略图滑块
+        var scale = scrollTop / this.canvas.height;
+        var y = scale * this.mini.canvas.height;
+        thumbnail.move.call(this, {y: y});
     }
 };
 

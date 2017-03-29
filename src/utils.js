@@ -10,7 +10,7 @@ export default {
         var conf = {};
         for (var k in mod) {
             if (typeof opt[k] === "object") {
-                conf[k] = extend(mod[k], opt[k])
+                conf[k] = this.extend(mod[k], opt[k])
             } else {
                 conf[k] = typeof opt[k] !== 'undefined' ? opt[k] : mod[k];
             }
@@ -36,7 +36,7 @@ export default {
             height: (computed.height.replace(/px/, '')) * 1
         }
     },
-    getHeight: function (height) {
+    getNodeHeight: function (height) {
         if (height > this.opt._height) {
             return this.opt._height;
         }
@@ -45,7 +45,7 @@ export default {
         }
         return height;
     },
-    getWeight: function (weight) {
+    getNodeWeight: function (weight) {
         if (weight > CONST.HM_NODE_WEIGHT_MAX) {
             return CONST.HM_NODE_WEIGHT_MAX;
         }
@@ -54,7 +54,7 @@ export default {
         }
         return weight;
     },
-    getAlpha: function (weight) {
+    getNodeAlpha: function (weight) {
         var alpha = weight / CONST.HM_NODE_WEIGHT_MAX;
         if (alpha > CONST.HM_NODE_ALPHA_MAX) {
             return CONST.HM_NODE_ALPHA_MAX;

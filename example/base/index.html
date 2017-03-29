@@ -43,7 +43,15 @@
 <div id="heatmap-container">
     <div id="heatmap"></div>
 </div>
-
+<script>
+    var hmContainer = document.querySelector('#heatmap-container');
+    hmContainer.addEventListener('DOMMouseScroll', wheel, false);
+    hmContainer.addEventListener('mousewheel', wheel, false);
+    // 滚动条
+    function wheel (event) {
+        hm.linkage(event.currentTarget.scrollTop)
+    }
+</script>
 
 <script>
     var options = {
@@ -55,16 +63,14 @@
                 onDragStart: function(event) {
                     // console.log('start', this, event);
                 },
-                onDrag: function(event, scrollTop) {
-                    // console.log('drag', scale);
-                    console.log(scrollTop);
-                     this.outerContainer.scrollTop = scrollTop;
+                onDrag: function(event) {
+                    // console.log('drag', this, event);
                 },
                 onDragEnd: function(event) {
                     // console.log('end', this, event);
                 },
                 onClick: function(event) {
-
+                    // console.log('click', this, event);
                 }
             }
         },
@@ -79,7 +85,7 @@
         var points = [];
         var max = 0;
         var width = 840;
-        var height = 400;
+        var height = 1400;
         while (len--) {
             var weight = Math.floor(Math.random() * 255);
             var radius = Math.floor(Math.random() * 40);
@@ -116,48 +122,8 @@
 //    console.time('heatmap');
 //    data.nodes = generateRandomData(300);
     data.attention = generateRandomAttentionData(10);
-    heatmap.instance(options, data);
+    var hm = heatmap.instance(options, data);
 //    console.timeEnd('heatmap');
-
-
-
-
-
-    function extend (mod, opt) {
-        if (!opt) return mod;
-        var conf = {};
-        for (var k in mod) {
-            if (typeof opt[k] === "object") {
-                conf[k] = extend(mod[k], opt[k])
-            } else {
-                conf[k] = typeof opt[k] !== 'undefined' ? opt[k] : mod[k];
-            }
-        }
-        return conf;
-    }
-
-    var mod = {
-        a: 1,
-        b: {
-            b1: 2
-        }
-    }
-
-    var opt = {
-        a: 2,
-        c: 3,
-        b: {
-            b1: 22,
-            b2: 222
-        }
-    }
-
-    console.log(extend(mod, opt));
-
-
-
-
-
 </script>
 </body>
 </html>

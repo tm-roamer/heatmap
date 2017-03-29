@@ -133,7 +133,6 @@ var view = {
                 shadowCtx.globalAlpha = node.alpha;
                 shadowCtx.drawImage(tpl, 0, node.y);
             });
-            // 给节点上色
             view.colorize.call(this, {x: 0, y: 0, w: this.opt._width, h: this.opt._height});
         }
     },

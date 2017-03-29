@@ -5,7 +5,6 @@ var path = require('path');
 var child_process = require('child_process');
 
 function watch (curr, prev) {
-    // console.log('监听文件', this, curr, prev);
     console.time('rollup');
     // ./node_modules/.bin/rollup src/heatmap.js --format umd --name 'heatmap'  --output dist/heatmap.js
     child_process.spawn('./node_modules/.bin/rollup',

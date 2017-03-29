@@ -44,6 +44,7 @@ var globalConfig = {
         1.0: "rgb(255, 0, 0)"
     },
     mini: {
+        sliderMinHeight: 30,                        // 滑块的最小高度
         sliderPaddingTop: 2,                        // 滑块滑到顶部的空隙距离
         sliderPaddingBottom: 2,                     // 滑块滑到底部的空隙距离
         enabled: true,                              // 是否启用缩略图
@@ -97,7 +98,7 @@ var utils = {
         var conf = {};
         for (var k in mod) {
             if (typeof opt[k] === "object") {
-                conf[k] = extend(mod[k], opt[k]);
+                conf[k] = this.extend(mod[k], opt[k]);
             } else {
                 conf[k] = typeof opt[k] !== 'undefined' ? opt[k] : mod[k];
             }
@@ -123,7 +124,7 @@ var utils = {
             height: (computed.height.replace(/px/, '')) * 1
         }
     },
-    getHeight: function (height) {
+    getNodeHeight: function (height) {
         if (height > this.opt._height) {
             return this.opt._height;
         }
@@ -132,7 +133,7 @@ var utils = {
         }
         return height;
     },
-    getWeight: function (weight) {
+    getNodeWeight: function (weight) {
         if (weight > CONSTANT.HM_NODE_WEIGHT_MAX) {
             return CONSTANT.HM_NODE_WEIGHT_MAX;
         }
@@ -141,7 +142,7 @@ var utils = {
         }
         return weight;
     },
-    getAlpha: function (weight) {
+    getNodeAlpha: function (weight) {
         var alpha = weight / CONSTANT.HM_NODE_WEIGHT_MAX;
         if (alpha > CONSTANT.HM_NODE_ALPHA_MAX) {
             return CONSTANT.HM_NODE_ALPHA_MAX;
@@ -326,7 +327,6 @@ var view = {
                 shadowCtx.globalAlpha = node.alpha;
                 shadowCtx.drawImage(tpl, 0, node.y);
             });
-            // 给节点上色
             view.colorize.call(this, {x: 0, y: 0, w: this.opt._width, h: this.opt._height});
         }
     },
@@ -377,23 +377,6 @@ var thumbnail = {
             mini.container.appendChild(fragment);
         }
     },
-    setContainerStyle: function(mini, num) {
-        // 设置宽高样式
-        var computed = utils.getComputedWH(mini.container);
-        mini.canvas.width = computed.width;
-        mini.canvas.height = computed.height;
-        mini.canvas.classList.add(CONSTANT.HM_MINI_CANVAS);
-        mini.container.classList.add(CONSTANT.HM_MINI_CONTAINER);
-        mini.container.setAttribute(CONSTANT.HM_ID, num);
-    },
-    setSliderHeight() {
-        var mini = this.mini,
-            outerContainer = this.outerContainer;
-        var outerHeight = utils.getComputedWH(outerContainer).height;
-        // 外容器的高度即为分屏的显示高度
-        var height =  outerHeight / this.canvas.height * mini.canvas.height;
-        thumbnail.move.call(this, {y: 0, h: height});
-    },
     createSlider: function(mini, fragment, num) {
         var slider = mini.slider = document.createElement('div');
         slider.setAttribute(CONSTANT.HM_ID, num);
@@ -414,24 +397,52 @@ var thumbnail = {
         fragment.appendChild(maskBottom);
         fragment.appendChild(maskLeft);
     },
-    move: function(coord) {
-        if (!this && !this.mini) return;
+    setContainerStyle: function(mini, num) {
+        // 设置宽高样式
+        var computed = utils.getComputedWH(mini.container);
+        mini.canvas.width = computed.width;
+        mini.canvas.height = computed.height;
+        mini.canvas.classList.add(CONSTANT.HM_MINI_CANVAS);
+        mini.container.classList.add(CONSTANT.HM_MINI_CONTAINER);
+        mini.container.setAttribute(CONSTANT.HM_ID, num);
+    },
+    setSliderHeight() {
         var mini = this.mini,
             miniOption = this.opt.mini,
-            maxHeight = this.mini.canvas.height;
+            sliderMinHeight = miniOption.sliderMinHeight,
+            outerContainer = this.outerContainer,
+            outerHeight = utils.getComputedWH(outerContainer).height;
+        // 外容器的高度即为分屏的显示高度
+        var height =  outerHeight / this.canvas.height * mini.canvas.height;
+        // 限制最小高度
+        if (height < sliderMinHeight) {
+            height = sliderMinHeight;
+        }
+        thumbnail.move.call(this, {y: 0, h: height});
+    },
+    move: function(coord) {
+        if (!this && !this.mini) return;
+        var y = coord.y = Math.ceil(coord.y),
+            mini = this.mini,
+            miniOption = this.opt.mini,
+            maxHeight = mini.canvas.height;
+        coord.h = coord.h || parseInt(mini.slider.style.height);
         // 计算尺寸
         if (coord.y <= 0) {
-            coord.y = 0 + miniOption.sliderPaddingTop;
+            y = 0;
+            coord.y = miniOption.sliderPaddingTop;
         }
         if (coord.y + coord.h >= maxHeight) {
-            coord.y = maxHeight - coord.h - miniOption.sliderPaddingBottom;
+            y = maxHeight - coord.h;
+            coord.y = y - miniOption.sliderPaddingBottom;
         }
         // 滑块, 遮罩
-        mini.slider.style.cssText = 'height:'+coord.h+ 'px;top:' + coord.y + 'px';
+        mini.slider.style.cssText = 'height:' + coord.h + 'px;top:' + coord.y + 'px';
         mini.mask.top.style.cssText = 'height:' + coord.y + 'px';
         mini.mask.right.style.cssText = 'height:' +coord.h + 'px;top:' + coord.y + 'px';
         mini.mask.bottom.style.cssText = 'top:' + (coord.y + coord.h) + 'px';
         mini.mask.left.style.cssText = 'height:' + coord.h + 'px;top:' + coord.y + 'px';
+        return y;
     },
     clear: function () {
         this.mini.ctx.clearRect(0, 0, this.opt._width, this.opt._height);
@@ -458,12 +469,14 @@ var handleEvent = {
         document.addEventListener('mousedown', this.mouseDown, false);
         document.addEventListener('mousemove', this.mouseMove, false);
         document.addEventListener('mouseup', this.mouseUp, false);
+        document.addEventListener('click', this.click, false);
         this.isbind = true;
     },
     globalUnbind: function () {
         document.removeEventListener('mousedown', this.mouseDown, false);
         document.removeEventListener('mousemove', this.mouseMove, false);
         document.removeEventListener('mouseup', this.mouseUp, false);
+        document.removeEventListener('click', this.click, false);
         this.isbind = false;
     },
     mouseDown: function (event) {
@@ -484,17 +497,10 @@ var handleEvent = {
         if (!handleEvent.isDrag) return;
         // 函数节流
         if (!utils.throttle(new Date().getTime())) return;
-        // 计算坐标
-        var heatmap = handleEvent.heatmap,
-            offset = heatmap.mini.container.getBoundingClientRect();
-        var h = utils.getComputedWH(heatmap.mini.slider).height;
-        var y = event.pageY - handleEvent.offsetY - offset.top;
-        // 移动滑块
-        thumbnail.move.call(heatmap, {y: y, h: h});
-        // 回调函数(联动通过回调函数来解决)
-        var scale = y / heatmap.mini.canvas.height;
-        var scrollTop = scale * handleEvent.heatmap.canvas.height;
-        handleEvent.heatmap.opt.mini.onDrag.call(handleEvent.heatmap, event, scrollTop);
+        // 联动
+        handleEvent.linkage.call(handleEvent.heatmap, event.pageY, handleEvent.offsetY);
+        // 回调
+        handleEvent.heatmap.opt.mini.onDrag.call(handleEvent.heatmap, event);
     },
     mouseUp: function (event) {
         // 回调函数
@@ -506,6 +512,37 @@ var handleEvent = {
         delete handleEvent.isDrag;
         delete handleEvent.offsetX;
         delete handleEvent.offsetY;
+    },
+    click: function (event) {
+        var target = event.target;
+        if (target.classList.contains(CONSTANT.HM_MINI_SLIDER)) return;
+        // 点击缩略图
+        var miniContainer = handleEvent.searchUp(target, CONSTANT.HM_MINI_CONTAINER);
+        if (miniContainer) {
+            // 移动滑块
+            var heatmap = cache.get(miniContainer.getAttribute(CONSTANT.HM_ID) * 1);
+            // 联动
+            handleEvent.linkage.call(heatmap, event.pageY);
+            // 回调
+            heatmap.opt.mini.onClick.call(heatmap, event);
+        }
+    },
+    searchUp: function (node, className) {
+        if (!node || node === document.body || node === document) return undefined;   // 向上递归到顶就停
+        if (node.classList.contains(className)) return node;
+        return this.searchUp(node.parentNode, className);
+    },
+    // 联动(缩略图和热图画布联动)
+    linkage: function(pageY, offsetY) {
+        // 计算缩略图容器坐标
+        var offset = this.mini.container.getBoundingClientRect();
+        // 移动滑块
+        var y  = thumbnail.move.call(this, {
+            y: pageY - (offsetY || 0) - offset.top
+        });
+        // 联动热图画布
+        var scale = y / this.mini.canvas.height;
+        this.outerContainer.scrollTop = scale * this.canvas.height;
     }
 };
 
@@ -577,8 +614,8 @@ HeatMap.prototype = {
                 data.nodes.push({
                     x: node.x,                              // 坐标: x
                     y: node.y,                              // 坐标: y
-                    weight: utils.getWeight(node.weight),   // 权重: 0 - 255
-                    alpha: utils.getAlpha(node.weight),     // 透明度: 0 - 1
+                    weight: utils.getNodeWeight(node.weight),   // 权重: 0 - 255
+                    alpha: utils.getNodeAlpha(node.weight),     // 透明度: 0 - 1
                     radius: node.radius                     // 半径: 默认 40
                 });
                 // 设置边界
@@ -590,9 +627,9 @@ HeatMap.prototype = {
             originData.attention.forEach(function (node) {
                 data.attention.push({
                     y: node.y,                                       // 坐标: y
-                    height: utils.getHeight.call(self, node.height), // 高度: 默认 40
-                    weight: utils.getWeight(node.weight),            // 权重: 0 - 255
-                    alpha: utils.getAlpha(node.weight),              // 透明度: 0 - 1
+                    height: utils.getNodeHeight.call(self, node.height), // 高度: 默认 40
+                    weight: utils.getNodeWeight(node.weight),            // 权重: 0 - 255
+                    alpha: utils.getNodeAlpha(node.weight),              // 透明度: 0 - 1
                 });
                 // 设置边界
                 // utils.setBoundaries(node.x, node.y, node.radius, self.boundaries);
@@ -613,6 +650,12 @@ HeatMap.prototype = {
     clear: function() {
         view.clear.call(this);
         thumbnail.clear.call(this);
+    },
+    linkage: function(scrollTop) {
+        // 联动缩略图滑块
+        var scale = scrollTop / this.canvas.height;
+        var y = scale * this.mini.canvas.height;
+        thumbnail.move.call(this, {y: y});
     }
 };
 
