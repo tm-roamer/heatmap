@@ -612,11 +612,11 @@ HeatMap.prototype = {
         if (Array.isArray(originData.nodes)) {
             originData.nodes.forEach(function (node) {
                 data.nodes.push({
-                    x: node.x,                              // 坐标: x
-                    y: node.y,                              // 坐标: y
+                    x: node.x,                                  // 坐标: x
+                    y: node.y,                                  // 坐标: y
                     weight: utils.getNodeWeight(node.weight),   // 权重: 0 - 255
                     alpha: utils.getNodeAlpha(node.weight),     // 透明度: 0 - 1
-                    radius: node.radius                     // 半径: 默认 40
+                    radius: node.radius                         // 半径: 默认 40
                 });
                 // 设置边界
                 utils.setBoundaries(node.x, node.y, node.radius, self.boundaries);
@@ -626,7 +626,7 @@ HeatMap.prototype = {
         if (Array.isArray(originData.attention)) {
             originData.attention.forEach(function (node) {
                 data.attention.push({
-                    y: node.y,                                       // 坐标: y
+                    y: node.y,                                           // 坐标: y
                     height: utils.getNodeHeight.call(self, node.height), // 高度: 默认 40
                     weight: utils.getNodeWeight(node.weight),            // 权重: 0 - 255
                     alpha: utils.getNodeAlpha(node.weight),              // 透明度: 0 - 1
