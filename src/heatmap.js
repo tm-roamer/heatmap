@@ -7,16 +7,25 @@ import view from './view';
 import thumbnail from './thumbnail';
 import handleEvent from './handleEvent';
 
-function HeatMap(options, container, originData, number) {
-    this.init(options, container, originData, number);
+function HeatMap(options, originData) {
+    var container = document.querySelector(options.container);
+    var outerContainer = document.querySelector(options.outerContainer);
+    if (!options.container || !options.outerContainer || !container || !outerContainer) {
+        throw new Error ('Invalid HeatMap Container Selector');
+    }
+    var index = cache.index();
+    container.setAttribute(CONST.HM_ID, index);
+    outerContainer.setAttribute(CONST.HM_ID, index);
+    this.container = container;                     // 容器DOM
+    this.outerContainer = outerContainer;           // 外容器DOM
+    this.init(options, originData, index);
 }
 
 HeatMap.prototype = {
     constructor: HeatMap,
-    init: function(options, container, originData, number) {
-        this._number = number;                          // 编号
+    init: function(options, originData, index) {
+        this._number = index;                           // 编号
         this.opt = utils.extend(globalConfig, options); // 配置项
-        this.container = container;                     // 容器DOM
         utils.resetBoundaries.call(this);               // 重置绘制边界
         view.init.call(this);                           // 初始渲染的视图层canvas
         this.data = this.setData(originData);           // 渲染数据
@@ -42,6 +51,7 @@ HeatMap.prototype = {
         delete this._number;
         delete this.opt;
         delete this.container;
+        delete this.outerContainer;
         delete this.originData;
         delete this.data;
         // 绘制变量
@@ -106,17 +116,13 @@ HeatMap.prototype = {
 
 export default {
     version: "1.0.2",
-    instance: function (options, container, originData) {
-        if (container && !container.hasAttribute(CONST.HM_ID)) {
-            // 初始化监听
-            handleEvent.init(true, document.body);
-            // 初始化缓存
-            cache.init();
-            // 初始化实例
-            var index = cache.index();
-            container.setAttribute(CONST.HM_ID, index);
-            return cache.set(new HeatMap(options, container, originData, index));
-        }
+    instance: function (options, originData) {
+        // 初始化监听
+        handleEvent.init(true, document.body);
+        // 初始化缓存
+        cache.init();
+        // 初始化实例
+        return cache.set(new HeatMap(options, originData));
     },
     destroy: function (obj) {
         if (obj) {

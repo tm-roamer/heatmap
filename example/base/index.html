@@ -47,25 +47,27 @@
 
 <script>
     var options = {
+            container: '#heatmap',
             outerContainer: '#heatmap-container',
             mini: {
                 enabled: true,
                 el: '#mini',
                 onDragStart: function(event) {
-
+                    // console.log('start', this, event);
                 },
-                onDrag: function(event) {
-
+                onDrag: function(event, scrollTop) {
+                    // console.log('drag', scale);
+                    console.log(scrollTop);
+                     this.outerContainer.scrollTop = scrollTop;
                 },
                 onDragEnd: function(event) {
-
+                    // console.log('end', this, event);
                 },
                 onClick: function(event) {
 
                 }
             }
         },
-        container = document.getElementById('heatmap'),
         data = {
             nodes: [],
             lines: [],
@@ -114,8 +116,48 @@
 //    console.time('heatmap');
 //    data.nodes = generateRandomData(300);
     data.attention = generateRandomAttentionData(10);
-    heatmap.instance(options, container, data);
+    heatmap.instance(options, data);
 //    console.timeEnd('heatmap');
+
+
+
+
+
+    function extend (mod, opt) {
+        if (!opt) return mod;
+        var conf = {};
+        for (var k in mod) {
+            if (typeof opt[k] === "object") {
+                conf[k] = extend(mod[k], opt[k])
+            } else {
+                conf[k] = typeof opt[k] !== 'undefined' ? opt[k] : mod[k];
+            }
+        }
+        return conf;
+    }
+
+    var mod = {
+        a: 1,
+        b: {
+            b1: 2
+        }
+    }
+
+    var opt = {
+        a: 2,
+        c: 3,
+        b: {
+            b1: 22,
+            b2: 222
+        }
+    }
+
+    console.log(extend(mod, opt));
+
+
+
+
+
 </script>
 </body>
 </html>

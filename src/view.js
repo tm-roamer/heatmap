@@ -144,9 +144,9 @@ var view = {
             shadowCanvas = this.shadowCanvas,
             container = this.container;
         canvas.classList.add(CONST.HM_CANVAS);
-        var computed = getComputedStyle(container) || {};
-        opt._width = canvas.width = shadowCanvas.width = (computed.width.replace(/px/, ''));
-        opt._height = canvas.height = shadowCanvas.height = (computed.height.replace(/px/, ''));
+        var computed = utils.getComputedWH(container);
+        opt._width = canvas.width = shadowCanvas.width = computed.width;
+        opt._height = canvas.height = shadowCanvas.height = computed.height;
     },
     // 初始化
     init: function () {

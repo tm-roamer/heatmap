@@ -31,7 +31,8 @@ var CONSTANT = {
 
 // 配置项
 var globalConfig = {
-    outerContainer: null,                           // 外容器, 主要用来控制缩略图和热图之间的联动
+    container: null,                                // 画布容器
+    outerContainer: null,                           // 画布容器的容器, 主要用来控制缩略图和热图之间的联动
     scale: 1,                                       // 缩放比
     radius: 40,                                     // 热力点半径
     height: 40,                                     // 注意力热图默认高度
@@ -43,6 +44,8 @@ var globalConfig = {
         1.0: "rgb(255, 0, 0)"
     },
     mini: {
+        sliderPaddingTop: 2,                        // 滑块滑到顶部的空隙距离
+        sliderPaddingBottom: 2,                     // 滑块滑到底部的空隙距离
         enabled: true,                              // 是否启用缩略图
         el: '',                                     // 缩略图容器的选择器, 类型: 字符串
         onDragStart: f,                             // 回调监听: 开始拖拽
@@ -89,11 +92,16 @@ var cache = {
 // 工具类
 var utils = {
     // 属性拷贝
-    extend: function (mod, opt) {
+    extend: function(mod, opt) {
         if (!opt) return mod;
         var conf = {};
-        for (var attr in mod)
-            conf[attr] = typeof opt[attr] !== "undefined" ? opt[attr] : mod[attr];
+        for (var k in mod) {
+            if (typeof opt[k] === "object") {
+                conf[k] = extend(mod[k], opt[k]);
+            } else {
+                conf[k] = typeof opt[k] !== 'undefined' ? opt[k] : mod[k];
+            }
+        }
         return conf;
     },
     // 节流函数
@@ -108,15 +116,12 @@ var utils = {
         };
         this.throttle(now);
     },
-    getSliderCoordY: function (y, h) {
-        var maxHeight = this.mini.canvas.height;
-        if (y < 0) {
-            return 0;
+    getComputedWH(dom) {
+        var computed = getComputedStyle(dom);
+        return {
+            width: (computed.width.replace(/px/, '')) * 1,
+            height: (computed.height.replace(/px/, '')) * 1
         }
-        if (y + h > maxHeight) {
-            return maxHeight - h;
-        }
-        return y;
     },
     getHeight: function (height) {
         if (height > this.opt._height) {
@@ -332,9 +337,9 @@ var view = {
             shadowCanvas = this.shadowCanvas,
             container = this.container;
         canvas.classList.add(CONSTANT.HM_CANVAS);
-        var computed = getComputedStyle(container) || {};
-        opt._width = canvas.width = shadowCanvas.width = (computed.width.replace(/px/, ''));
-        opt._height = canvas.height = shadowCanvas.height = (computed.height.replace(/px/, ''));
+        var computed = utils.getComputedWH(container);
+        opt._width = canvas.width = shadowCanvas.width = computed.width;
+        opt._height = canvas.height = shadowCanvas.height = computed.height;
     },
     // 初始化
     init: function () {
@@ -374,24 +379,20 @@ var thumbnail = {
     },
     setContainerStyle: function(mini, num) {
         // 设置宽高样式
-        var computed = getComputedStyle(mini.container) || {};
-        mini.canvas.width = (computed.width.replace(/px/, ''));
-        mini.canvas.height = (computed.height.replace(/px/, ''));
+        var computed = utils.getComputedWH(mini.container);
+        mini.canvas.width = computed.width;
+        mini.canvas.height = computed.height;
         mini.canvas.classList.add(CONSTANT.HM_MINI_CANVAS);
         mini.container.classList.add(CONSTANT.HM_MINI_CONTAINER);
         mini.container.setAttribute(CONSTANT.HM_ID, num);
     },
     setSliderHeight() {
         var mini = this.mini,
-            outer = this.opt.outerContainer,
-            outerDom = document.querySelector(outer);
-        if (outerDom) {
-            var computed = getComputedStyle(outerDom) || {};
-            var outerHeight = (computed.height.replace(/px/, ''));
-            // 外容器的高度即为分屏的显示高度
-            var height =  outerHeight / this.canvas.height * mini.canvas.height;
-            thumbnail.move.call(this, {y: 0, h: height});
-        }
+            outerContainer = this.outerContainer;
+        var outerHeight = utils.getComputedWH(outerContainer).height;
+        // 外容器的高度即为分屏的显示高度
+        var height =  outerHeight / this.canvas.height * mini.canvas.height;
+        thumbnail.move.call(this, {y: 0, h: height});
     },
     createSlider: function(mini, fragment, num) {
         var slider = mini.slider = document.createElement('div');
@@ -415,10 +416,18 @@ var thumbnail = {
     },
     move: function(coord) {
         if (!this && !this.mini) return;
-        var mini = this.mini;
-        // 滑块
+        var mini = this.mini,
+            miniOption = this.opt.mini,
+            maxHeight = this.mini.canvas.height;
+        // 计算尺寸
+        if (coord.y <= 0) {
+            coord.y = 0 + miniOption.sliderPaddingTop;
+        }
+        if (coord.y + coord.h >= maxHeight) {
+            coord.y = maxHeight - coord.h - miniOption.sliderPaddingBottom;
+        }
+        // 滑块, 遮罩
         mini.slider.style.cssText = 'height:'+coord.h+ 'px;top:' + coord.y + 'px';
-        // 遮罩
         mini.mask.top.style.cssText = 'height:' + coord.y + 'px';
         mini.mask.right.style.cssText = 'height:' +coord.h + 'px;top:' + coord.y + 'px';
         mini.mask.bottom.style.cssText = 'top:' + (coord.y + coord.h) + 'px';
@@ -467,7 +476,7 @@ var handleEvent = {
             handleEvent.offsetX = event.offsetX || 0;
             handleEvent.offsetY = event.offsetY || 0;
             // 回调函数
-            handleEvent.heatmap.opt.onDragStart.call(handleEvent.heatmap, event);
+            handleEvent.heatmap.opt.mini.onDragStart.call(handleEvent.heatmap, event);
         }
     },
     mouseMove: function (event) {
@@ -475,40 +484,50 @@ var handleEvent = {
         if (!handleEvent.isDrag) return;
         // 函数节流
         if (!utils.throttle(new Date().getTime())) return;
-        // 计算坐标移动滑块
+        // 计算坐标
         var heatmap = handleEvent.heatmap,
             offset = heatmap.mini.container.getBoundingClientRect();
+        var h = utils.getComputedWH(heatmap.mini.slider).height;
         var y = event.pageY - handleEvent.offsetY - offset.top;
-        var computed = getComputedStyle(heatmap.mini.slider) || {};
-        var h = computed.height.replace(/px/, '')*1;
-        thumbnail.move.call(heatmap, {
-            y: utils.getSliderCoordY.call(heatmap, y, h),
-            h: h
-        });
+        // 移动滑块
+        thumbnail.move.call(heatmap, {y: y, h: h});
         // 回调函数(联动通过回调函数来解决)
-        handleEvent.heatmap.opt.onDrag.call(handleEvent.heatmap, event);
+        var scale = y / heatmap.mini.canvas.height;
+        var scrollTop = scale * handleEvent.heatmap.canvas.height;
+        handleEvent.heatmap.opt.mini.onDrag.call(handleEvent.heatmap, event, scrollTop);
     },
     mouseUp: function (event) {
-        document.body.classList.remove(CONSTANT.HM_USER_SELECT);
+        // 回调函数
+        if (handleEvent.isDrag) {
+            document.body.classList.remove(CONSTANT.HM_USER_SELECT);
+            handleEvent.heatmap.opt.mini.onDragEnd.call(handleEvent.heatmap, event);
+        }
         delete handleEvent.heatmap;
         delete handleEvent.isDrag;
         delete handleEvent.offsetX;
         delete handleEvent.offsetY;
-        // 回调函数(联动通过回调函数来解决)
-        handleEvent.heatmap.opt.onDragEnd.call(handleEvent.heatmap, event);
     }
 };
 
-function HeatMap(options, container, originData, number) {
-    this.init(options, container, originData, number);
+function HeatMap(options, originData) {
+    var container = document.querySelector(options.container);
+    var outerContainer = document.querySelector(options.outerContainer);
+    if (!options.container || !options.outerContainer || !container || !outerContainer) {
+        throw new Error ('Invalid HeatMap Container Selector');
+    }
+    var index = cache.index();
+    container.setAttribute(CONSTANT.HM_ID, index);
+    outerContainer.setAttribute(CONSTANT.HM_ID, index);
+    this.container = container;                     // 容器DOM
+    this.outerContainer = outerContainer;           // 外容器DOM
+    this.init(options, originData, index);
 }
 
 HeatMap.prototype = {
     constructor: HeatMap,
-    init: function(options, container, originData, number) {
-        this._number = number;                          // 编号
+    init: function(options, originData, index) {
+        this._number = index;                           // 编号
         this.opt = utils.extend(globalConfig, options); // 配置项
-        this.container = container;                     // 容器DOM
         utils.resetBoundaries.call(this);               // 重置绘制边界
         view.init.call(this);                           // 初始渲染的视图层canvas
         this.data = this.setData(originData);           // 渲染数据
@@ -534,6 +553,7 @@ HeatMap.prototype = {
         delete this._number;
         delete this.opt;
         delete this.container;
+        delete this.outerContainer;
         delete this.originData;
         delete this.data;
         // 绘制变量
@@ -598,17 +618,13 @@ HeatMap.prototype = {
 
 var heatmap = {
     version: "1.0.2",
-    instance: function (options, container, originData) {
-        if (container && !container.hasAttribute(CONSTANT.HM_ID)) {
-            // 初始化监听
-            handleEvent.init(true, document.body);
-            // 初始化缓存
-            cache.init();
-            // 初始化实例
-            var index = cache.index();
-            container.setAttribute(CONSTANT.HM_ID, index);
-            return cache.set(new HeatMap(options, container, originData, index));
-        }
+    instance: function (options, originData) {
+        // 初始化监听
+        handleEvent.init(true, document.body);
+        // 初始化缓存
+        cache.init();
+        // 初始化实例
+        return cache.set(new HeatMap(options, originData));
     },
     destroy: function (obj) {
         if (obj) {

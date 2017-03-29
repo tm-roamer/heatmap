@@ -1,6 +1,7 @@
 "use strict";
 
 import {CONSTANT as CONST, globalConfig} from './config';
+import utils from './utils';
 
 /**
  * 展示对象 操作缩略图展示
@@ -25,24 +26,20 @@ var thumbnail = {
     },
     setContainerStyle: function(mini, num) {
         // 设置宽高样式
-        var computed = getComputedStyle(mini.container) || {};
-        mini.canvas.width = (computed.width.replace(/px/, ''));
-        mini.canvas.height = (computed.height.replace(/px/, ''));
+        var computed = utils.getComputedWH(mini.container);
+        mini.canvas.width = computed.width;
+        mini.canvas.height = computed.height;
         mini.canvas.classList.add(CONST.HM_MINI_CANVAS);
         mini.container.classList.add(CONST.HM_MINI_CONTAINER);
         mini.container.setAttribute(CONST.HM_ID, num);
     },
     setSliderHeight() {
         var mini = this.mini,
-            outer = this.opt.outerContainer,
-            outerDom = document.querySelector(outer);
-        if (outerDom) {
-            var computed = getComputedStyle(outerDom) || {};
-            var outerHeight = (computed.height.replace(/px/, ''));
-            // 外容器的高度即为分屏的显示高度
-            var height =  outerHeight / this.canvas.height * mini.canvas.height;
-            thumbnail.move.call(this, {y: 0, h: height});
-        }
+            outerContainer = this.outerContainer;
+        var outerHeight = utils.getComputedWH(outerContainer).height;
+        // 外容器的高度即为分屏的显示高度
+        var height =  outerHeight / this.canvas.height * mini.canvas.height;
+        thumbnail.move.call(this, {y: 0, h: height});
     },
     createSlider: function(mini, fragment, num) {
         var slider = mini.slider = document.createElement('div');
@@ -66,10 +63,18 @@ var thumbnail = {
     },
     move: function(coord) {
         if (!this && !this.mini) return;
-        var mini = this.mini;
-        // 滑块
+        var mini = this.mini,
+            miniOption = this.opt.mini,
+            maxHeight = this.mini.canvas.height;
+        // 计算尺寸
+        if (coord.y <= 0) {
+            coord.y = 0 + miniOption.sliderPaddingTop;
+        }
+        if (coord.y + coord.h >= maxHeight) {
+            coord.y = maxHeight - coord.h - miniOption.sliderPaddingBottom;
+        }
+        // 滑块, 遮罩
         mini.slider.style.cssText = 'height:'+coord.h+ 'px;top:' + coord.y + 'px';
-        // 遮罩
         mini.mask.top.style.cssText = 'height:' + coord.y + 'px';
         mini.mask.right.style.cssText = 'height:' +coord.h + 'px;top:' + coord.y + 'px';
         mini.mask.bottom.style.cssText = 'top:' + (coord.y + coord.h) + 'px';

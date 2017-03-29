@@ -27,7 +27,8 @@ export var CONSTANT = {
 
 // 配置项
 export var globalConfig = {
-    outerContainer: null,                           // 外容器, 主要用来控制缩略图和热图之间的联动
+    container: null,                                // 画布容器
+    outerContainer: null,                           // 画布容器的容器, 主要用来控制缩略图和热图之间的联动
     scale: 1,                                       // 缩放比
     radius: 40,                                     // 热力点半径
     height: 40,                                     // 注意力热图默认高度
@@ -39,6 +40,8 @@ export var globalConfig = {
         1.0: "rgb(255, 0, 0)"
     },
     mini: {
+        sliderPaddingTop: 2,                        // 滑块滑到顶部的空隙距离
+        sliderPaddingBottom: 2,                     // 滑块滑到底部的空隙距离
         enabled: true,                              // 是否启用缩略图
         el: '',                                     // 缩略图容器的选择器, 类型: 字符串
         onDragStart: f,                             // 回调监听: 开始拖拽

@@ -35,7 +35,7 @@ var handleEvent = {
             handleEvent.offsetX = event.offsetX || 0;
             handleEvent.offsetY = event.offsetY || 0;
             // 回调函数
-            handleEvent.heatmap.opt.onDragStart.call(handleEvent.heatmap, event);
+            handleEvent.heatmap.opt.mini.onDragStart.call(handleEvent.heatmap, event);
         }
     },
     mouseMove: function (event) {
@@ -43,27 +43,28 @@ var handleEvent = {
         if (!handleEvent.isDrag) return;
         // 函数节流
         if (!utils.throttle(new Date().getTime())) return;
-        // 计算坐标移动滑块
+        // 计算坐标
         var heatmap = handleEvent.heatmap,
             offset = heatmap.mini.container.getBoundingClientRect();
+        var h = utils.getComputedWH(heatmap.mini.slider).height;
         var y = event.pageY - handleEvent.offsetY - offset.top;
-        var computed = getComputedStyle(heatmap.mini.slider) || {};
-        var h = computed.height.replace(/px/, '')*1;
-        thumbnail.move.call(heatmap, {
-            y: utils.getSliderCoordY.call(heatmap, y, h),
-            h: h
-        });
+        // 移动滑块
+        thumbnail.move.call(heatmap, {y: y, h: h});
         // 回调函数(联动通过回调函数来解决)
-        handleEvent.heatmap.opt.onDrag.call(handleEvent.heatmap, event);
+        var scale = y / heatmap.mini.canvas.height;
+        var scrollTop = scale * handleEvent.heatmap.canvas.height;
+        handleEvent.heatmap.opt.mini.onDrag.call(handleEvent.heatmap, event, scrollTop);
     },
     mouseUp: function (event) {
-        document.body.classList.remove(CONST.HM_USER_SELECT);
+        // 回调函数
+        if (handleEvent.isDrag) {
+            document.body.classList.remove(CONST.HM_USER_SELECT);
+            handleEvent.heatmap.opt.mini.onDragEnd.call(handleEvent.heatmap, event);
+        }
         delete handleEvent.heatmap;
         delete handleEvent.isDrag;
         delete handleEvent.offsetX;
         delete handleEvent.offsetY;
-        // 回调函数(联动通过回调函数来解决)
-        handleEvent.heatmap.opt.onDragEnd.call(handleEvent.heatmap, event);
     }
 };
 

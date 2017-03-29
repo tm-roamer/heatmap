@@ -5,11 +5,16 @@ import {CONSTANT as CONST, globalConfig} from './config';
 // 工具类
 export default {
     // 属性拷贝
-    extend: function (mod, opt) {
+    extend: function(mod, opt) {
         if (!opt) return mod;
         var conf = {};
-        for (var attr in mod)
-            conf[attr] = typeof opt[attr] !== "undefined" ? opt[attr] : mod[attr];
+        for (var k in mod) {
+            if (typeof opt[k] === "object") {
+                conf[k] = extend(mod[k], opt[k])
+            } else {
+                conf[k] = typeof opt[k] !== 'undefined' ? opt[k] : mod[k];
+            }
+        }
         return conf;
     },
     // 节流函数
@@ -24,15 +29,12 @@ export default {
         };
         this.throttle(now);
     },
-    getSliderCoordY: function (y, h) {
-        var maxHeight = this.mini.canvas.height;
-        if (y < 0) {
-            return 0;
+    getComputedWH(dom) {
+        var computed = getComputedStyle(dom);
+        return {
+            width: (computed.width.replace(/px/, '')) * 1,
+            height: (computed.height.replace(/px/, '')) * 1
         }
-        if (y + h > maxHeight) {
-            return maxHeight - h;
-        }
-        return y;
     },
     getHeight: function (height) {
         if (height > this.opt._height) {
