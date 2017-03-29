@@ -38,20 +38,11 @@
 
 <!-- 缩略图 -->
 <div id="mini"></div>
-
-<!-- 绘制热图画布 -->
+<!-- 绘制热图画布外容器 -->
 <div id="heatmap-container">
+    <!-- 绘制热图画布 -->
     <div id="heatmap"></div>
 </div>
-<script>
-    var hmContainer = document.querySelector('#heatmap-container');
-    hmContainer.addEventListener('DOMMouseScroll', wheel, false);
-    hmContainer.addEventListener('mousewheel', wheel, false);
-    // 滚动条
-    function wheel (event) {
-        hm.linkage(event.currentTarget.scrollTop)
-    }
-</script>
 
 <script>
     var options = {

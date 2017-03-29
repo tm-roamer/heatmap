@@ -42,6 +42,15 @@ var globalConfig = {
         0.55: "rgb(0, 255, 0)",
         0.85: "rgb(255, 255, 0)",
         1.0: "rgb(255, 0, 0)"
+//      0.45: "rgb(0,0,255)",
+//      0.55: "rgb(0,255,255)",
+//      0.65: "rgb(0,255,0)",
+//      0.95: "yellow",
+//      1.0: "rgb(255,0,0)"
+    },
+    pagination: {
+        currentPage: 1,                             // 当前第几分屏
+        pageSize: 10000                             // 每个分屏高度多少像素
     },
     mini: {
         sliderMinHeight: 30,                        // 滑块的最小高度
@@ -55,14 +64,6 @@ var globalConfig = {
         onClick: f                                  // 回调监听: 点击
     }
 };
-
-// me.set("gradient", config.gradient || {
-//         0.45: "rgb(0,0,255)",
-//         0.55: "rgb(0,255,255)",
-//         0.65: "rgb(0,255,0)",
-//         0.95: "yellow",
-//         1.0: "rgb(255,0,0)"
-//     });    // default is the common blue to red gradient
 
 // 缓存对象
 var cache = {
@@ -152,6 +153,15 @@ var utils = {
         }
         return alpha;
     },
+    resetBoundaries: function() {
+        // 重新初始边界
+        return {
+            x: CONSTANT.HM_BOUNDARIES_X_Y,
+            y: CONSTANT.HM_BOUNDARIES_X_Y,
+            w: 0,
+            h: 0
+        };
+    },
     setBoundaries: function (x, y, radius, boundaries) {
         var rectX = x - radius,
             rectY = y - radius,
@@ -171,27 +181,18 @@ var utils = {
         }
         return boundaries;
     },
-    resetBoundaries: function() {
-        // 重新初始边界
-        this.boundaries = {
-            x: CONSTANT.HM_BOUNDARIES_X_Y,
-            y: CONSTANT.HM_BOUNDARIES_X_Y,
-            w: 0,
-            h: 0
-        };
-    },
-    getBoundaries: function(boundaries, maxWidth, maxHeight) {
-        if (boundaries.x < 0) {
-            boundaries.x = 0;
+    setAttentionBoundaries: function(rectX, rectY, rectW, rectH, boundaries) {
+        if (rectX < boundaries.x) {
+            boundaries.x = rectX;
         }
-        if (boundaries.y < 0) {
-            boundaries.y = 0;
+        if (rectY < boundaries.y) {
+            boundaries.y = rectY;
         }
-        if (boundaries.x + boundaries.w > maxWidth) {
-            boundaries.w = maxWidth - boundaries.x;
+        if (rectW > boundaries.w) {
+            boundaries.w = rectW;
         }
-        if (boundaries.y + boundaries.h > maxHeight) {
-            boundaries.h = maxHeight - boundaries.y;
+        if (rectH > boundaries.h) {
+            boundaries.h = rectH;
         }
         return boundaries;
     }
@@ -268,7 +269,6 @@ var view = {
     // 节点上色
     colorize: function (boundaries) {
         var colorPalette = this.colorPalette;
-        boundaries = boundaries || utils.getBoundaries(this.boundaries, this.opt._width, this.opt._height);
         // 取得图像
         var img = this.shadowCtx.getImageData(boundaries.x, boundaries.y, boundaries.w, boundaries.h);
         var imgData = img.data;
@@ -302,8 +302,9 @@ var view = {
             shadowCtx = this.shadowCtx,
             nodeBlur = this.opt.nodeBlur,
             nodes = this.data.nodes,
+            lines  = this.data.lines,
             attention = this.data.attention;
-
+        // 点击热图
         if (Array.isArray(nodes) && nodes.length > 0) {
             nodes.forEach(function(node) {
                 // 缓存模板
@@ -318,16 +319,26 @@ var view = {
                 shadowCtx.drawImage(tpl, node.x - node.radius, node.y - node.radius);
             });
             // 给节点上色
-            view.colorize.call(this);
+            view.colorize.call(this, this._boundaries);
         }
-
+        // 阅读线
+        if (Array.isArray(lines) && lines.length > 0) {
+            lines.forEach(function(line) {
+            });
+        }
+        // 注意力热图
         if (Array.isArray(attention) && attention.length > 0) {
             attention.forEach(function(node) {
-                tpl = view.getAttentionTemplate(self.opt._width, node.height);
+                // 缓存模板
+                if (!self._attentionTemplates[node.height]) {
+                    self._attentionTemplates[node.height] = tpl = view.getAttentionTemplate(self.opt._width, node.height);
+                } else {
+                    tpl = self._attentionTemplates[node.height];
+                }
                 shadowCtx.globalAlpha = node.alpha;
                 shadowCtx.drawImage(tpl, 0, node.y);
             });
-            view.colorize.call(this, {x: 0, y: 0, w: this.opt._width, h: this.opt._height});
+            view.colorize.call(this, this._attentionBoundaries);
         }
     },
     // 设置样式
@@ -348,8 +359,10 @@ var view = {
         this.shadowCanvas = document.createElement('canvas');
         this.shadowCtx = this.shadowCanvas.getContext('2d');
         this.colorPalette = view.getColorPalette.call(this);
-        // 根据节点半径, 缓存节点模板
-        this._templates = {};
+        this._templates = {};                               // 根据节点半径, 缓存节点模板
+        this._attentionTemplates = {};                      // 根据节点高度, 缓存节点模板
+        this._boundaries = utils.resetBoundaries();         // 重置绘制边界
+        this._attentionBoundaries = utils.resetBoundaries();
         view.setContainerStyle.call(this);
         this.container.classList.add(CONSTANT.HM_CONTAINER);
         this.container.appendChild(this.canvas);
@@ -470,6 +483,8 @@ var handleEvent = {
         document.addEventListener('mousemove', this.mouseMove, false);
         document.addEventListener('mouseup', this.mouseUp, false);
         document.addEventListener('click', this.click, false);
+        document.addEventListener('DOMMouseScroll', this.wheel, false);
+        document.addEventListener('mousewheel', this.wheel, false);
         this.isbind = true;
     },
     globalUnbind: function () {
@@ -477,6 +492,8 @@ var handleEvent = {
         document.removeEventListener('mousemove', this.mouseMove, false);
         document.removeEventListener('mouseup', this.mouseUp, false);
         document.removeEventListener('click', this.click, false);
+        document.removeEventListener('DOMMouseScroll', this.wheel, false);
+        document.removeEventListener('mousewheel', this.wheel, false);
         this.isbind = false;
     },
     mouseDown: function (event) {
@@ -527,6 +544,15 @@ var handleEvent = {
             heatmap.opt.mini.onClick.call(heatmap, event);
         }
     },
+    // 滚动条
+    wheel: function (event) {
+        var container = handleEvent.searchUp(event.target, CONSTANT.HM_CONTAINER);
+        if (container) {
+            var heatmap = cache.get(container.getAttribute(CONSTANT.HM_ID) * 1);
+            // 联动缩略图
+            heatmap.linkage(heatmap.outerContainer.scrollTop);
+        }
+    },
     searchUp: function (node, className) {
         if (!node || node === document.body || node === document) return undefined;   // 向上递归到顶就停
         if (node.classList.contains(className)) return node;
@@ -565,7 +591,6 @@ HeatMap.prototype = {
     init: function(options, originData, index) {
         this._number = index;                           // 编号
         this.opt = utils.extend(globalConfig, options); // 配置项
-        utils.resetBoundaries.call(this);               // 重置绘制边界
         view.init.call(this);                           // 初始渲染的视图层canvas
         this.data = this.setData(originData);           // 渲染数据
         if (this.opt.mini.enabled) {
@@ -587,20 +612,24 @@ HeatMap.prototype = {
     },
     destroy: function() {
         // 基础变量
-        delete this._number;
         delete this.opt;
-        delete this.container;
-        delete this.outerContainer;
-        delete this.originData;
         delete this.data;
+        delete this._number;
+        delete this.container;
+        delete this.originData;
+        delete this.outerContainer;
         // 绘制变量
         delete this.canvas;
         delete this.ctx;
         delete this.shadowCanvas;
         delete this.shadowCtx;
-        delete this.boundaries;
         delete this.colorPalette;
+        // 点击热图
+        delete this._boundaries;
         delete this._templates;
+        // 注意力热图
+        delete this._attentionBoundaries;
+        delete this._attentionTemplates;
         // 缩略图
         delete this.mini;
     },
@@ -609,6 +638,7 @@ HeatMap.prototype = {
             data = {nodes: [], lines: [], attention: []};
         if (!originData) return data;
         this.originData = originData;                   // 缓存原始数据
+        // 点击热图
         if (Array.isArray(originData.nodes)) {
             originData.nodes.forEach(function (node) {
                 data.nodes.push({
@@ -619,10 +649,12 @@ HeatMap.prototype = {
                     radius: node.radius                         // 半径: 默认 40
                 });
                 // 设置边界
-                utils.setBoundaries(node.x, node.y, node.radius, self.boundaries);
+                utils.setBoundaries(node.x, node.y, node.radius, self._boundaries);
             });
         }
+        // 阅读线
         if (Array.isArray(originData.lines)) {}
+        // 注意力热图
         if (Array.isArray(originData.attention)) {
             originData.attention.forEach(function (node) {
                 data.attention.push({
@@ -632,7 +664,8 @@ HeatMap.prototype = {
                     alpha: utils.getNodeAlpha(node.weight),              // 透明度: 0 - 1
                 });
                 // 设置边界
-                // utils.setBoundaries(node.x, node.y, node.radius, self.boundaries);
+                utils.setAttentionBoundaries(0, node.y, self.canvas.width,
+                    node.y + node.height, self._attentionBoundaries);
             });
         }
         return data;
@@ -643,9 +676,10 @@ HeatMap.prototype = {
     },
     draw: function() {
         this.clear();
-        view.render.call(this);        // 画布
-        thumbnail.render.call(this);   // 缩略图
-        utils.resetBoundaries.call(this);
+        view.render.call(this);                             // 画布
+        thumbnail.render.call(this);                        // 缩略图
+        this._boundaries = utils.resetBoundaries();         // 重置绘制边界
+        this._attentionBoundaries = utils.resetBoundaries();
     },
     clear: function() {
         view.clear.call(this);

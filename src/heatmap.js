@@ -26,7 +26,6 @@ HeatMap.prototype = {
     init: function(options, originData, index) {
         this._number = index;                           // 编号
         this.opt = utils.extend(globalConfig, options); // 配置项
-        utils.resetBoundaries.call(this);               // 重置绘制边界
         view.init.call(this);                           // 初始渲染的视图层canvas
         this.data = this.setData(originData);           // 渲染数据
         if (this.opt.mini.enabled) {
@@ -48,20 +47,24 @@ HeatMap.prototype = {
     },
     destroy: function() {
         // 基础变量
-        delete this._number;
         delete this.opt;
-        delete this.container;
-        delete this.outerContainer;
-        delete this.originData;
         delete this.data;
+        delete this._number;
+        delete this.container;
+        delete this.originData;
+        delete this.outerContainer;
         // 绘制变量
         delete this.canvas;
         delete this.ctx;
         delete this.shadowCanvas;
         delete this.shadowCtx;
-        delete this.boundaries;
         delete this.colorPalette;
+        // 点击热图
+        delete this._boundaries;
         delete this._templates;
+        // 注意力热图
+        delete this._attentionBoundaries;
+        delete this._attentionTemplates;
         // 缩略图
         delete this.mini;
     },
@@ -70,6 +73,7 @@ HeatMap.prototype = {
             data = {nodes: [], lines: [], attention: []};
         if (!originData) return data;
         this.originData = originData;                   // 缓存原始数据
+        // 点击热图
         if (Array.isArray(originData.nodes)) {
             originData.nodes.forEach(function (node) {
                 data.nodes.push({
@@ -80,10 +84,12 @@ HeatMap.prototype = {
                     radius: node.radius                         // 半径: 默认 40
                 });
                 // 设置边界
-                utils.setBoundaries(node.x, node.y, node.radius, self.boundaries);
+                utils.setBoundaries(node.x, node.y, node.radius, self._boundaries);
             });
         }
+        // 阅读线
         if (Array.isArray(originData.lines)) {}
+        // 注意力热图
         if (Array.isArray(originData.attention)) {
             originData.attention.forEach(function (node) {
                 data.attention.push({
@@ -93,7 +99,8 @@ HeatMap.prototype = {
                     alpha: utils.getNodeAlpha(node.weight),              // 透明度: 0 - 1
                 });
                 // 设置边界
-                // utils.setBoundaries(node.x, node.y, node.radius, self.boundaries);
+                utils.setAttentionBoundaries(0, node.y, self.canvas.width,
+                    node.y + node.height, self._attentionBoundaries);
             });
         }
         return data;
@@ -104,9 +111,10 @@ HeatMap.prototype = {
     },
     draw: function() {
         this.clear();
-        view.render.call(this);        // 画布
-        thumbnail.render.call(this);   // 缩略图
-        utils.resetBoundaries.call(this);
+        view.render.call(this);                             // 画布
+        thumbnail.render.call(this);                        // 缩略图
+        this._boundaries = utils.resetBoundaries();         // 重置绘制边界
+        this._attentionBoundaries = utils.resetBoundaries();
     },
     clear: function() {
         view.clear.call(this);

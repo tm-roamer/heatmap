@@ -18,6 +18,8 @@ var handleEvent = {
         document.addEventListener('mousemove', this.mouseMove, false);
         document.addEventListener('mouseup', this.mouseUp, false);
         document.addEventListener('click', this.click, false);
+        document.addEventListener('DOMMouseScroll', this.wheel, false);
+        document.addEventListener('mousewheel', this.wheel, false);
         this.isbind = true;
     },
     globalUnbind: function () {
@@ -25,6 +27,8 @@ var handleEvent = {
         document.removeEventListener('mousemove', this.mouseMove, false);
         document.removeEventListener('mouseup', this.mouseUp, false);
         document.removeEventListener('click', this.click, false);
+        document.removeEventListener('DOMMouseScroll', this.wheel, false);
+        document.removeEventListener('mousewheel', this.wheel, false);
         this.isbind = false;
     },
     mouseDown: function (event) {
@@ -73,6 +77,15 @@ var handleEvent = {
             handleEvent.linkage.call(heatmap, event.pageY);
             // 回调
             heatmap.opt.mini.onClick.call(heatmap, event);
+        }
+    },
+    // 滚动条
+    wheel: function (event) {
+        var container = handleEvent.searchUp(event.target, CONST.HM_CONTAINER);
+        if (container) {
+            var heatmap = cache.get(container.getAttribute(CONST.HM_ID) * 1);
+            // 联动缩略图
+            heatmap.linkage(heatmap.outerContainer.scrollTop);
         }
     },
     searchUp: function (node, className) {

@@ -38,6 +38,15 @@ export var globalConfig = {
         0.55: "rgb(0, 255, 0)",
         0.85: "rgb(255, 255, 0)",
         1.0: "rgb(255, 0, 0)"
+//      0.45: "rgb(0,0,255)",
+//      0.55: "rgb(0,255,255)",
+//      0.65: "rgb(0,255,0)",
+//      0.95: "yellow",
+//      1.0: "rgb(255,0,0)"
+    },
+    pagination: {
+        currentPage: 1,                             // 当前第几分屏
+        pageSize: 10000                             // 每个分屏高度多少像素
     },
     mini: {
         sliderMinHeight: 30,                        // 滑块的最小高度
@@ -51,11 +60,3 @@ export var globalConfig = {
         onClick: f                                  // 回调监听: 点击
     }
 };
-
-// me.set("gradient", config.gradient || {
-//         0.45: "rgb(0,0,255)",
-//         0.55: "rgb(0,255,255)",
-//         0.65: "rgb(0,255,0)",
-//         0.95: "yellow",
-//         1.0: "rgb(255,0,0)"
-//     });    // default is the common blue to red gradient

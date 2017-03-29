@@ -74,7 +74,6 @@ var view = {
     // 节点上色
     colorize: function (boundaries) {
         var colorPalette = this.colorPalette;
-        boundaries = boundaries || utils.getBoundaries(this.boundaries, this.opt._width, this.opt._height);
         // 取得图像
         var img = this.shadowCtx.getImageData(boundaries.x, boundaries.y, boundaries.w, boundaries.h);
         var imgData = img.data;
@@ -108,8 +107,9 @@ var view = {
             shadowCtx = this.shadowCtx,
             nodeBlur = this.opt.nodeBlur,
             nodes = this.data.nodes,
+            lines  = this.data.lines,
             attention = this.data.attention;
-
+        // 点击热图
         if (Array.isArray(nodes) && nodes.length > 0) {
             nodes.forEach(function(node) {
                 // 缓存模板
@@ -124,16 +124,26 @@ var view = {
                 shadowCtx.drawImage(tpl, node.x - node.radius, node.y - node.radius);
             });
             // 给节点上色
-            view.colorize.call(this);
+            view.colorize.call(this, this._boundaries);
         }
-
+        // 阅读线
+        if (Array.isArray(lines) && lines.length > 0) {
+            lines.forEach(function(line) {
+            });
+        }
+        // 注意力热图
         if (Array.isArray(attention) && attention.length > 0) {
             attention.forEach(function(node) {
-                tpl = view.getAttentionTemplate(self.opt._width, node.height);
+                // 缓存模板
+                if (!self._attentionTemplates[node.height]) {
+                    self._attentionTemplates[node.height] = tpl = view.getAttentionTemplate(self.opt._width, node.height);
+                } else {
+                    tpl = self._attentionTemplates[node.height];
+                }
                 shadowCtx.globalAlpha = node.alpha;
                 shadowCtx.drawImage(tpl, 0, node.y);
             });
-            view.colorize.call(this, {x: 0, y: 0, w: this.opt._width, h: this.opt._height});
+            view.colorize.call(this, this._attentionBoundaries);
         }
     },
     // 设置样式
@@ -154,8 +164,10 @@ var view = {
         this.shadowCanvas = document.createElement('canvas');
         this.shadowCtx = this.shadowCanvas.getContext('2d');
         this.colorPalette = view.getColorPalette.call(this);
-        // 根据节点半径, 缓存节点模板
-        this._templates = {};
+        this._templates = {};                               // 根据节点半径, 缓存节点模板
+        this._attentionTemplates = {};                      // 根据节点高度, 缓存节点模板
+        this._boundaries = utils.resetBoundaries();         // 重置绘制边界
+        this._attentionBoundaries = utils.resetBoundaries();
         view.setContainerStyle.call(this);
         this.container.classList.add(CONST.HM_CONTAINER);
         this.container.appendChild(this.canvas);

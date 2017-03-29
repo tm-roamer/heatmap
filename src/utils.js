@@ -64,6 +64,15 @@ export default {
         }
         return alpha;
     },
+    resetBoundaries: function() {
+        // 重新初始边界
+        return {
+            x: CONST.HM_BOUNDARIES_X_Y,
+            y: CONST.HM_BOUNDARIES_X_Y,
+            w: 0,
+            h: 0
+        };
+    },
     setBoundaries: function (x, y, radius, boundaries) {
         var rectX = x - radius,
             rectY = y - radius,
@@ -83,27 +92,18 @@ export default {
         }
         return boundaries;
     },
-    resetBoundaries: function() {
-        // 重新初始边界
-        this.boundaries = {
-            x: CONST.HM_BOUNDARIES_X_Y,
-            y: CONST.HM_BOUNDARIES_X_Y,
-            w: 0,
-            h: 0
-        };
-    },
-    getBoundaries: function(boundaries, maxWidth, maxHeight) {
-        if (boundaries.x < 0) {
-            boundaries.x = 0;
+    setAttentionBoundaries: function(rectX, rectY, rectW, rectH, boundaries) {
+        if (rectX < boundaries.x) {
+            boundaries.x = rectX;
         }
-        if (boundaries.y < 0) {
-            boundaries.y = 0;
+        if (rectY < boundaries.y) {
+            boundaries.y = rectY;
         }
-        if (boundaries.x + boundaries.w > maxWidth) {
-            boundaries.w = maxWidth - boundaries.x;
+        if (rectW > boundaries.w) {
+            boundaries.w = rectW;
         }
-        if (boundaries.y + boundaries.h > maxHeight) {
-            boundaries.h = maxHeight - boundaries.y;
+        if (rectH > boundaries.h) {
+            boundaries.h = rectH;
         }
         return boundaries;
     }
