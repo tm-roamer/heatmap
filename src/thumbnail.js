@@ -75,13 +75,13 @@ var thumbnail = {
             maxHeight = mini.canvas.height;
         coord.h = coord.h || parseInt(mini.slider.style.height);
         // 计算尺寸
-        if (coord.y <= 0) {
-            y = 0;
-            coord.y = miniOption.sliderPaddingTop;
-        }
         if (coord.y + coord.h >= maxHeight) {
             y = maxHeight - coord.h;
             coord.y = y - miniOption.sliderPaddingBottom;
+        }
+        if (coord.y <= 0) {
+            y = 0;
+            coord.y = miniOption.sliderPaddingTop;
         }
         // 滑块, 遮罩
         mini.slider.style.cssText = 'height:' + coord.h + 'px;top:' + coord.y + 'px';
