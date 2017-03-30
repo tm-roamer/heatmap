@@ -124,7 +124,7 @@ HeatMap.prototype = {
         view.clear.call(this);
         thumbnail.clear.call(this);
     },
-    linkage: function(scrollTop) {
+    moveSlider: function(scrollTop) {
         // 联动缩略图滑块
         var scale = scrollTop / this.canvas.height;
         var y = scale * this.mini.canvas.height;

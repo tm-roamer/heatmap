@@ -562,14 +562,14 @@ var handleEvent = {
         if (outerContainer) {
             // 联动缩略图
             var heatmap = cache.get(outerContainer.getAttribute(CONSTANT.HM_ID) * 1);
-            heatmap.linkage(outerContainer.scrollTop);
+            heatmap.moveSlider(outerContainer.scrollTop);
         }
     },
     scroll: function(event) {
         // 联动缩略图
         var heatmap = cache.get(event.currentTarget.getAttribute(CONSTANT.HM_ID) * 1);
         if (heatmap) {
-            heatmap.linkage(event.currentTarget.scrollTop);
+            heatmap.moveSlider(event.currentTarget.scrollTop);
         }
     },
     searchUp: function (node, className) {
@@ -709,7 +709,7 @@ HeatMap.prototype = {
         view.clear.call(this);
         thumbnail.clear.call(this);
     },
-    linkage: function(scrollTop) {
+    moveSlider: function(scrollTop) {
         // 联动缩略图滑块
         var scale = scrollTop / this.canvas.height;
         var y = scale * this.mini.canvas.height;

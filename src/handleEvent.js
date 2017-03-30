@@ -97,14 +97,14 @@ var handleEvent = {
         if (outerContainer) {
             // 联动缩略图
             var heatmap = cache.get(outerContainer.getAttribute(CONST.HM_ID) * 1);
-            heatmap.linkage(outerContainer.scrollTop);
+            heatmap.moveSlider(outerContainer.scrollTop);
         }
     },
     scroll: function(event) {
         // 联动缩略图
         var heatmap = cache.get(event.currentTarget.getAttribute(CONST.HM_ID) * 1);
         if (heatmap) {
-            heatmap.linkage(event.currentTarget.scrollTop);
+            heatmap.moveSlider(event.currentTarget.scrollTop);
         }
     },
     searchUp: function (node, className) {
