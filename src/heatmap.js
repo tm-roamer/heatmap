@@ -18,6 +18,8 @@ function HeatMap(options, originData) {
     outerContainer.setAttribute(CONST.HM_ID, index);
     this.container = container;                     // 容器DOM
     this.outerContainer = outerContainer;           // 外容器DOM
+    handleEvent.unbind.call(this);                  // 解除监听
+    handleEvent.bind.call(this);                    // 绑定监听
     this.init(options, originData, index);
 }
 
@@ -46,6 +48,8 @@ HeatMap.prototype = {
         this.draw();
     },
     destroy: function() {
+        // 清除监听
+        handleEvent.unbind.call(this);
         // 基础变量
         delete this.opt;
         delete this.data;
@@ -129,7 +133,7 @@ HeatMap.prototype = {
 };
 
 export default {
-    version: "1.0.2",
+    version: "1.0.3",
     instance: function (options, originData) {
         // 初始化监听
         handleEvent.init(true, document.body);

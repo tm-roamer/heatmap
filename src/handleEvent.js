@@ -18,8 +18,8 @@ var handleEvent = {
         document.addEventListener('mousemove', this.mouseMove, false);
         document.addEventListener('mouseup', this.mouseUp, false);
         document.addEventListener('click', this.click, false);
-        document.addEventListener('DOMMouseScroll', this.wheel, false);
-        document.addEventListener('mousewheel', this.wheel, false);
+        // document.addEventListener('DOMMouseScroll', this.wheel, false);
+        // document.addEventListener('mousewheel', this.wheel, false);
         this.isbind = true;
     },
     globalUnbind: function () {
@@ -27,17 +27,24 @@ var handleEvent = {
         document.removeEventListener('mousemove', this.mouseMove, false);
         document.removeEventListener('mouseup', this.mouseUp, false);
         document.removeEventListener('click', this.click, false);
-        document.removeEventListener('DOMMouseScroll', this.wheel, false);
-        document.removeEventListener('mousewheel', this.wheel, false);
+        // document.removeEventListener('DOMMouseScroll', this.wheel, false);
+        // document.removeEventListener('mousewheel', this.wheel, false);
         this.isbind = false;
+    },
+    bind: function() {
+        this.outerContainer.addEventListener('scroll', handleEvent.scroll, false);
+    },
+    unbind: function() {
+        this.outerContainer.removeEventListener('scroll', handleEvent.scroll, false);
     },
     mouseDown: function (event) {
         // 点击滑块
-        var slider = event.target;
-        if (slider.classList.contains(CONST.HM_MINI_SLIDER)) {
+        var target = event.target;
+        // 可以拖拽滑块, 也可以拖拽外容器的原生滚动条
+        if (target.classList.contains(CONST.HM_MINI_SLIDER)) {
             document.body.classList.add(CONST.HM_USER_SELECT);
             handleEvent.isDrag = true;
-            handleEvent.heatmap = cache.get(slider.getAttribute(CONST.HM_ID) * 1);
+            handleEvent.heatmap = cache.get(target.getAttribute(CONST.HM_ID) * 1);
             handleEvent.offsetX = event.offsetX || 0;
             handleEvent.offsetY = event.offsetY || 0;
             // 回调函数
@@ -71,21 +78,33 @@ var handleEvent = {
         // 点击缩略图
         var miniContainer = handleEvent.searchUp(target, CONST.HM_MINI_CONTAINER);
         if (miniContainer) {
+            // 加入动画
+            miniContainer.classList.add(CONST.HM_ANIMATE);
             // 移动滑块
             var heatmap = cache.get(miniContainer.getAttribute(CONST.HM_ID) * 1);
             // 联动
             handleEvent.linkage.call(heatmap, event.pageY);
             // 回调
             heatmap.opt.mini.onClick.call(heatmap, event);
+            // @fix 配合css动画, 待优化使用requestAnimationFrame
+            setTimeout(function() {
+                miniContainer.classList.remove(CONST.HM_ANIMATE);
+            }, 100);
         }
     },
-    // 滚动条
     wheel: function (event) {
-        var container = handleEvent.searchUp(event.target, CONST.HM_CONTAINER);
-        if (container) {
-            var heatmap = cache.get(container.getAttribute(CONST.HM_ID) * 1);
+        var outerContainer = handleEvent.searchUp(event.target, CONST.HM_OUTER_CONTAINER);
+        if (outerContainer) {
             // 联动缩略图
-            heatmap.linkage(heatmap.outerContainer.scrollTop);
+            var heatmap = cache.get(outerContainer.getAttribute(CONST.HM_ID) * 1);
+            heatmap.linkage(outerContainer.scrollTop);
+        }
+    },
+    scroll: function(event) {
+        // 联动缩略图
+        var heatmap = cache.get(event.currentTarget.getAttribute(CONST.HM_ID) * 1);
+        if (heatmap) {
+            heatmap.linkage(event.currentTarget.scrollTop);
         }
     },
     searchUp: function (node, className) {
@@ -95,14 +114,15 @@ var handleEvent = {
     },
     // 联动(缩略图和热图画布联动)
     linkage: function(pageY, offsetY) {
+        var mini = this.mini;
         // 计算缩略图容器坐标
-        var offset = this.mini.container.getBoundingClientRect();
+        var offset = mini.container.getBoundingClientRect();
+        // 点击触发时, 焦点应该位于滑块中间
+        offsetY = offsetY || parseInt(mini.slider.style.height) / 2;
         // 移动滑块
-        var y  = thumbnail.move.call(this, {
-            y: pageY - (offsetY || 0) - offset.top
-        });
+        var y  = thumbnail.move.call(this, {y: pageY - offsetY - offset.top});
         // 联动热图画布
-        var scale = y / this.mini.canvas.height;
+        var scale = y / mini.canvas.height;
         this.outerContainer.scrollTop = scale * this.canvas.height;
     }
 };

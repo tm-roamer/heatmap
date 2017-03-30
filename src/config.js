@@ -12,7 +12,9 @@ export var CONSTANT = {
     HM_NODE_ALPHA_MAX: 1,                           // 绘制节点的alpha透明度最大值
     HM_NODE_ALPHA_MIN: 0.01,                        // 绘制节点的alpha透明度最小值
     HM_USER_SELECT: "hm-user-select",               // 拖拽进行中, 在body标签动态绑定, 防止文本选中
+    HM_OUTER_CONTAINER: 'hm-outer-container',       // 外容器classname
     HM_CONTAINER: 'hm-container',                   // 容器classname
+    HM_ANIMATE: 'hm-animate',                       // 动画classname
     HM_CANVAS: 'hm-canvas',                         // 画布canvas的classname
     HM_MINI_CONTAINER: 'hm-mini-container',         // 缩略图容器classname
     HM_MINI_SLIDER: 'hm-mini-slider',               // 缩略图滑块classname

@@ -1,7 +1,11 @@
 /* 热图样式 */
+
+/* 拖拽过程中阻止文本选中 */
 body.hm-user-select {
     user-select: none;
 }
+/* 热图外容器 */
+.hm-outer-container {}
 /* 热图容器 */
 .hm-container {
     position: relative;
@@ -10,6 +14,14 @@ body.hm-user-select {
 .hm-mini-container {
     position:relative;
     cursor: pointer;
+}
+/* 点击缩略图的移动滑块动画 */
+.hm-mini-container.hm-animate .hm-mini-slider,
+.hm-mini-container.hm-animate .hm-mini-mask-top,
+.hm-mini-container.hm-animate .hm-mini-mask-right,
+.hm-mini-container.hm-animate .hm-mini-mask-bottom,
+.hm-mini-container.hm-animate .hm-mini-mask-left {
+    transition: all 0.1s;
 }
 /* 缩略图热图画布 */
 .hm-mini-canvas {
