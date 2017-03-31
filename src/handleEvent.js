@@ -109,8 +109,11 @@ var handleEvent = {
             var page = Math.ceil(scrollTop / pagination.pageSize);
             if (pagination.current != page) {
                 pagination.current = page;
+
+                heatmap.paging(pagination.current, pagination.pageSize);
+
                 // 回调函数
-                heatmap.opt.onScroll.call(heatmap, event, pagination.current);
+                // heatmap.opt.onScroll.call(heatmap, event, pagination.current);
             }
             if (heatmap.opt.mini.enabled) {
                 // 移动滑块

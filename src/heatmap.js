@@ -109,6 +109,9 @@ HeatMap.prototype = {
         }
         return data;
     },
+    getDataLimit: function() {
+          
+    },
     load: function(data) {
         this.setData(data);
         this.draw();
@@ -136,6 +139,19 @@ HeatMap.prototype = {
         var scale = scrollTop / this.canvas.height;
         var y = scale * this.mini.canvas.height;
         thumbnail.move.call(this, {y: y});
+    },
+    paging: function(current, pageSize) {
+        var pagination = this.opt.pagination;
+        current = current || pagination.current;
+        pageSize = pageSize || pagination.pageSize;
+
+        // 取得分屏数据
+
+        // 绘制一个canvas
+
+        // 联动缩略图
+
+        //
     }
 };
 

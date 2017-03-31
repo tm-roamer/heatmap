@@ -63,5 +63,5 @@ export var globalConfig = {
         onDragEnd: f,                               // 回调监听: 结束拖拽
         onClick: f                                  // 回调监听: 点击
     },
-    onScroll: f                                     // 回调监听: 滚动条
+    // onScroll: f                                     // 回调监听: 滚动条
 };

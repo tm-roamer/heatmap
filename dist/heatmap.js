@@ -67,7 +67,7 @@ var globalConfig = {
         onDragEnd: f,                               // 回调监听: 结束拖拽
         onClick: f                                  // 回调监听: 点击
     },
-    onScroll: f                                     // 回调监听: 滚动条
+    // onScroll: f                                     // 回调监听: 滚动条
 };
 
 // 缓存对象
@@ -579,8 +579,11 @@ var handleEvent = {
             var page = Math.ceil(scrollTop / pagination.pageSize);
             if (pagination.current != page) {
                 pagination.current = page;
+
+                heatmap.paging(pagination.current, pagination.pageSize);
+
                 // 回调函数
-                heatmap.opt.onScroll.call(heatmap, event, pagination.current);
+                // heatmap.opt.onScroll.call(heatmap, event, pagination.current);
             }
             if (heatmap.opt.mini.enabled) {
                 // 移动滑块
@@ -710,6 +713,9 @@ HeatMap.prototype = {
         }
         return data;
     },
+    getDataLimit: function() {
+          
+    },
     load: function(data) {
         this.setData(data);
         this.draw();
@@ -737,6 +743,19 @@ HeatMap.prototype = {
         var scale = scrollTop / this.canvas.height;
         var y = scale * this.mini.canvas.height;
         thumbnail.move.call(this, {y: y});
+    },
+    paging: function(current, pageSize) {
+        var pagination = this.opt.pagination;
+        current = current || pagination.current;
+        pageSize = pageSize || pagination.pageSize;
+
+        // 取得分屏数据
+
+        // 绘制一个canvas
+
+        // 联动缩略图
+
+        //
     }
 };
 
