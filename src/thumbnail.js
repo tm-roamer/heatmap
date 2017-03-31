@@ -10,23 +10,23 @@ import utils from './utils';
 var thumbnail = {
     init: function() {
         var mini = this.mini,
-            num = this._number,
+            index = this._number,
             miniOption = this.opt.mini;
         if (miniOption.enabled && miniOption.el) {
             var fragment = document.createDocumentFragment();
             mini.container = document.querySelector(miniOption.el);
             mini.canvas = document.createElement('canvas');
             mini.ctx = mini.canvas.getContext('2d');
-            thumbnail.createSlider(mini, fragment, num);
+            thumbnail.createSlider(mini, fragment, index);
             thumbnail.createMask(mini.mask, fragment);
-            thumbnail.setContainerStyle(mini, num);
+            thumbnail.setContainerStyle(mini, index);
             thumbnail.setSliderHeight.call(this);
             mini.container.appendChild(fragment);
         }
     },
-    createSlider: function(mini, fragment, num) {
+    createSlider: function(mini, fragment, index) {
         var slider = mini.slider = document.createElement('div');
-        slider.setAttribute(CONST.HM_ID, num);
+        slider.setAttribute(CONST.HM_ID, index);
         slider.classList.add(CONST.HM_MINI_SLIDER);
         fragment.appendChild(slider);
     },
@@ -44,14 +44,14 @@ var thumbnail = {
         fragment.appendChild(maskBottom);
         fragment.appendChild(maskLeft);
     },
-    setContainerStyle: function(mini, num) {
+    setContainerStyle: function(mini, index) {
         // 设置宽高样式
         var computed = utils.getComputedWH(mini.container);
         mini.canvas.width = computed.width;
         mini.canvas.height = computed.height;
         mini.canvas.classList.add(CONST.HM_MINI_CANVAS);
         mini.container.classList.add(CONST.HM_MINI_CONTAINER);
-        mini.container.setAttribute(CONST.HM_ID, num);
+        mini.container.setAttribute(CONST.HM_ID, index);
     },
     setSliderHeight() {
         var mini = this.mini,
@@ -60,7 +60,7 @@ var thumbnail = {
             outerContainer = this.outerContainer,
             outerHeight = utils.getComputedWH(outerContainer).height;
         // 外容器的高度即为分屏的显示高度
-        var height =  outerHeight / this.canvas.height * mini.canvas.height;
+        var height =  outerHeight / this.maxHeight * mini.canvas.height;
         // 限制最小高度
         if (height < sliderMinHeight) {
             height = sliderMinHeight;
@@ -92,15 +92,18 @@ var thumbnail = {
         return y;
     },
     clear: function () {
-        this.mini.ctx.clearRect(0, 0, this.opt._width, this.opt._height);
+        var mini = this.mini;
+        mini.ctx.clearRect(0, 0, mini.canvas.width, mini.canvas.height);
     },
     render: function() {
         var mini = this.mini;
-        // 生成缩略图
-        mini.ctx.drawImage(this.canvas, 0, 0, this.opt._width, this.opt._height,
-            0, 0, mini.canvas.width, mini.canvas.height); // 拉伸图片
-        // 插入缩略图
-        mini.container.appendChild(mini.canvas);
+        // @fix 规则改了
+        // // 生成缩略图
+        // var computed = utils.getComputedWH(this.container);
+        // mini.ctx.drawImage(this.shadowCanvas, 0, 0, computed.width, computed.height,
+        //     0, 0, mini.canvas.width, mini.canvas.height); // 拉伸图片
+        // // 插入缩略图
+        // mini.container.appendChild(mini.canvas);
     }
 };
 

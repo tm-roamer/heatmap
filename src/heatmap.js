@@ -27,6 +27,7 @@ HeatMap.prototype = {
     init: function(options, originData, index) {
         this._number = index;                           // 编号
         this.opt = utils.extend(globalConfig, options); // 配置项
+        this.splitScreen = [];                          // 配置分屏数组
         view.init.call(this);                           // 初始渲染的视图层canvas
         this.data = this.setData(originData);           // 渲染数据
         this.draw();
@@ -58,23 +59,20 @@ HeatMap.prototype = {
         delete this.originData;
         delete this.outerContainer;
         // 绘制变量
-        delete this.canvas;
-        delete this.ctx;
+        delete this.splitScreen;
         delete this.shadowCanvas;
         delete this.shadowCtx;
         delete this.colorPalette;
         // 点击热图
-        delete this._boundaries;
         delete this._templates;
         // 注意力热图
-        delete this._attentionBoundaries;
         delete this._attentionTemplates;
         // 缩略图
         delete this.mini;
     },
     setData: function (originData) {
         var self = this,
-            data = {nodes: [], lines: [], attention: []};
+            data = {nodes: [], attention: []};
         if (!originData) return data;
         this.originData = originData;                   // 缓存原始数据
         // 点击热图
@@ -87,12 +85,8 @@ HeatMap.prototype = {
                     alpha: utils.getNodeAlpha(node.weight),     // 透明度: 0 - 1
                     radius: node.radius                         // 半径: 默认 40
                 });
-                // 设置边界
-                utils.setBoundaries(node.x, node.y, node.radius, self._boundaries);
             });
         }
-        // 阅读线
-        if (Array.isArray(originData.lines)) {}
         // 注意力热图
         if (Array.isArray(originData.attention)) {
             originData.attention.forEach(function (node) {
@@ -102,56 +96,60 @@ HeatMap.prototype = {
                     weight: utils.getNodeWeight(node.weight),            // 权重: 0 - 255
                     alpha: utils.getNodeAlpha(node.weight),              // 透明度: 0 - 1
                 });
-                // 设置边界
-                utils.setAttentionBoundaries(0, node.y, self.canvas.width,
-                    node.y + node.height, self._attentionBoundaries);
             });
         }
         return data;
     },
-    getDataLimit: function() {
-          
+    getDataLimit: function(current, pageSize) {
+        var limit = {nodes: [], attention: []},
+            max = current * pageSize,
+            min = max - pageSize,
+            data = this.data;
+        // 提取分屏数据
+        function handle(arr) {
+            var sub = [];
+            arr.forEach(function (node) {
+                if (min <= node.y && node.y < max) {
+                    var n = utils.clone(node);
+                    // 控制分屏渲染偏移
+                    n.y -= min;
+                    sub.push(n);
+                }
+            });
+            return sub;
+        }
+        // 点击热图
+        limit.nodes = handle(data.nodes);
+        // 注意力热图
+        limit.attention = handle(data.attention);
+        return limit;
     },
     load: function(data) {
         this.setData(data);
         this.draw();
         this.opt.mini.enabled && this.drawMini();
     },
-    draw: function() {
-        this.clear();
-        view.render.call(this);                             // 画布
-        this._boundaries = utils.resetBoundaries();         // 重置绘制边界
-        this._attentionBoundaries = utils.resetBoundaries();
-    },
     clear: function() {
         view.clear.call(this);
+    },
+    draw: function() {
+        this.clear();
+        view.renderBatch.call(this);                             // 画布
     },
     clearMini: function() {
         thumbnail.clear.call(this);
     },
     drawMini: function() {
         this.clearMini();
+        // @fix ctx
         thumbnail.render.call(this);
     },
     moveSlider: function(scrollTop) {
         if (!this.opt.mini.enabled) return;
         // 联动缩略图滑块
-        var scale = scrollTop / this.canvas.height;
+        var scale = scrollTop / this.opt.maxHeight;
         var y = scale * this.mini.canvas.height;
         thumbnail.move.call(this, {y: y});
-    },
-    paging: function(current, pageSize) {
-        var pagination = this.opt.pagination;
-        current = current || pagination.current;
-        pageSize = pageSize || pagination.pageSize;
-
-        // 取得分屏数据
-
-        // 绘制一个canvas
-
-        // 联动缩略图
-
-        //
     }
 };
 

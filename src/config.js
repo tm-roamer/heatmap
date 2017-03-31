@@ -5,7 +5,6 @@ var f = function() {};
 // 常量
 export var CONSTANT = {
     THROTTLE_TIME: 14,                              // 节流函数的间隔时间单位ms, FPS = 1000 / THROTTLE_TIME
-    HM_BOUNDARIES_X_Y: 1000000,                     // 图像绘制边界的预设值, 反复计算递减
     HM_NODE_WEIGHT_MAX: 255,                        // 绘制节点的weight权重最大值
     HM_NODE_WEIGHT_MIN: 0,                          // 绘制节点的weight权重最小值
     HM_NODE_HEIGHT_MIN: 1,                          // 绘制注意力热图的节点最小高度
@@ -63,5 +62,5 @@ export var globalConfig = {
         onDragEnd: f,                               // 回调监听: 结束拖拽
         onClick: f                                  // 回调监听: 点击
     },
-    // onScroll: f                                     // 回调监听: 滚动条
+    onScroll: f                                     // 回调监听: 滚动条
 };

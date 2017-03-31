@@ -9,6 +9,7 @@ var f = function() {};
 // 常量
 var CONSTANT = {
     THROTTLE_TIME: 14,                              // 节流函数的间隔时间单位ms, FPS = 1000 / THROTTLE_TIME
+    HM_BOUNDARIES_X_Y: 1000000,                     // 图像绘制边界的预设值, 反复计算递减
     HM_NODE_WEIGHT_MAX: 255,                        // 绘制节点的weight权重最大值
     HM_NODE_WEIGHT_MIN: 0,                          // 绘制节点的weight权重最小值
     HM_NODE_HEIGHT_MIN: 1,                          // 绘制注意力热图的节点最小高度
@@ -102,17 +103,13 @@ var utils = {
         if (!opt) return mod;
         var conf = {};
         for (var k in mod) {
-            if (typeof opt[k] === "object")
+            if (typeof opt[k] === "object") {
                 conf[k] = this.extend(mod[k], opt[k]);
-            else
+            } else {
                 conf[k] = typeof opt[k] !== 'undefined' ? opt[k] : mod[k];
+            }
         }
         return conf;
-    },
-    clone: function(o2) {
-        var o1 = {};
-        for (var k in o2) o1[k] = o2[k];
-        return o1;
     },
     // 节流函数
     throttle: function (now) {
@@ -134,26 +131,75 @@ var utils = {
         }
     },
     getNodeHeight: function (height) {
-        if (height > this.opt.maxHeight)
-            return this.opt.maxHeight;
-        if (height < CONSTANT.HM_NODE_HEIGHT_MIN)
+        if (height > this.opt._height) {
+            return this.opt._height;
+        }
+        if (height < CONSTANT.HM_NODE_HEIGHT_MIN) {
             return CONSTANT.HM_NODE_HEIGHT_MIN;
+        }
         return height;
     },
     getNodeWeight: function (weight) {
-        if (weight > CONSTANT.HM_NODE_WEIGHT_MAX)
+        if (weight > CONSTANT.HM_NODE_WEIGHT_MAX) {
             return CONSTANT.HM_NODE_WEIGHT_MAX;
-        if (weight < CONSTANT.HM_NODE_WEIGHT_MIN)
+        }
+        if (weight < CONSTANT.HM_NODE_WEIGHT_MIN) {
             return CONSTANT.HM_NODE_WEIGHT_MIN;
+        }
         return weight;
     },
     getNodeAlpha: function (weight) {
         var alpha = weight / CONSTANT.HM_NODE_WEIGHT_MAX;
-        if (alpha > CONSTANT.HM_NODE_ALPHA_MAX)
+        if (alpha > CONSTANT.HM_NODE_ALPHA_MAX) {
             return CONSTANT.HM_NODE_ALPHA_MAX;
-        if (alpha < CONSTANT.HM_NODE_ALPHA_MIN)
+        }
+        if (alpha < CONSTANT.HM_NODE_ALPHA_MIN) {
             return CONSTANT.HM_NODE_ALPHA_MIN;
+        }
         return alpha;
+    },
+    resetBoundaries: function() {
+        // 重新初始边界
+        return {
+            x: CONSTANT.HM_BOUNDARIES_X_Y,
+            y: CONSTANT.HM_BOUNDARIES_X_Y,
+            w: 0,
+            h: 0
+        };
+    },
+    setBoundaries: function (x, y, radius, boundaries) {
+        var rectX = x - radius,
+            rectY = y - radius,
+            rectW = x + radius,
+            rectH = y + radius;
+        if (rectX < boundaries.x) {
+            boundaries.x = rectX;
+        }
+        if (rectY < boundaries.y) {
+            boundaries.y = rectY;
+        }
+        if (rectW > boundaries.w) {
+            boundaries.w = rectW;
+        }
+        if (rectH > boundaries.h) {
+            boundaries.h = rectH;
+        }
+        return boundaries;
+    },
+    setAttentionBoundaries: function(rectX, rectY, rectW, rectH, boundaries) {
+        if (rectX < boundaries.x) {
+            boundaries.x = rectX;
+        }
+        if (rectY < boundaries.y) {
+            boundaries.y = rectY;
+        }
+        if (rectW > boundaries.w) {
+            boundaries.w = rectW;
+        }
+        if (rectH > boundaries.h) {
+            boundaries.h = rectH;
+        }
+        return boundaries;
     }
 };
 
@@ -226,10 +272,10 @@ var view = {
         return tplCanvas;
     },
     // 节点上色
-    colorize: function (ctx) {
+    colorize: function (boundaries, ctx) {
         var colorPalette = this.colorPalette;
         // 取得图像
-        var img = this.shadowCtx.getImageData(0, 0, this.shadowCanvas.width, this.shadowCanvas.height);
+        var img = this.shadowCtx.getImageData(boundaries.x, boundaries.y, boundaries.w, boundaries.h);
         var imgData = img.data;
         var len = imgData.length;
         // 上色
@@ -248,7 +294,7 @@ var view = {
                 imgData[i] = alpha;                         // alpha
             }
         }
-        ctx.putImageData(img, 0, 0);
+        ctx.putImageData(img, boundaries.x, boundaries.y);
     },
     // 清除
     clear: function () {
@@ -261,11 +307,11 @@ var view = {
         }
     },
     // 批量渲染
-    renderBatch: function() {
+    batchRender: function() {
         var self = this;
         if (Array.isArray(this.splitScreen)) {
             this.splitScreen.forEach(function(v, i) {
-                var dataLimit = self.getDataLimit(i + 1, self.opt.pagination.pageSize);
+                var dataLimit = self.getDataLimit(i, self.opt.pagination.pageSize);
                 self.render(dataLimit.nodes, dataLimit.attention, v.ctx);
             });
         }
@@ -292,7 +338,7 @@ var view = {
                 shadowCtx.drawImage(tpl, node.x - node.radius, node.y - node.radius);
             });
             // 给节点上色
-            view.colorize.call(this, ctx);
+            view.colorize.call(this, this._boundaries, ctx);
         }
         // 注意力热图
         if (Array.isArray(attention) && attention.length > 0) {
@@ -300,14 +346,14 @@ var view = {
                 // 缓存模板
                 if (!self._attentionTemplates[node.height]) {
                     self._attentionTemplates[node.height] = tpl =
-                        view.getAttentionTemplate(self.opt.maxWidth, node.height);
+                        view.getAttentionTemplate(self.shadowCanvas.width, node.height);
                 } else {
                     tpl = self._attentionTemplates[node.height];
                 }
                 shadowCtx.globalAlpha = node.alpha;
                 shadowCtx.drawImage(tpl, 0, node.y);
             });
-            view.colorize.call(this, ctx);
+            view.colorize.call(this, this._attentionBoundaries, ctx);
         }
     },
     // 初始化
@@ -317,6 +363,8 @@ var view = {
         this.colorPalette = view.getColorPalette.call(this);
         this._templates = {};                               // 根据节点半径, 缓存节点模板
         this._attentionTemplates = {};                      // 根据节点高度, 缓存节点模板
+        this._boundaries = utils.resetBoundaries();         // 重置绘制边界
+        this._attentionBoundaries = utils.resetBoundaries();
         this.container.classList.add(CONSTANT.HM_CONTAINER);
         // 循环添加分屏
         var opt = this.opt,
@@ -630,6 +678,7 @@ HeatMap.prototype = {
         // 基础变量
         delete this.opt;
         delete this.data;
+
         delete this._number;
         delete this.container;
         delete this.originData;
@@ -640,8 +689,10 @@ HeatMap.prototype = {
         delete this.shadowCtx;
         delete this.colorPalette;
         // 点击热图
+        delete this._boundaries;
         delete this._templates;
         // 注意力热图
+        delete this._attentionBoundaries;
         delete this._attentionTemplates;
         // 缩略图
         delete this.mini;
@@ -661,6 +712,8 @@ HeatMap.prototype = {
                     alpha: utils.getNodeAlpha(node.weight),     // 透明度: 0 - 1
                     radius: node.radius                         // 半径: 默认 40
                 });
+                // 设置边界
+                utils.setBoundaries(node.x, node.y, node.radius, self._boundaries);
             });
         }
         // 注意力热图
@@ -672,32 +725,49 @@ HeatMap.prototype = {
                     weight: utils.getNodeWeight(node.weight),            // 权重: 0 - 255
                     alpha: utils.getNodeAlpha(node.weight),              // 透明度: 0 - 1
                 });
+                // 设置边界
+                utils.setAttentionBoundaries(0, node.y, self.canvas.width,
+                    node.y + node.height, self._attentionBoundaries);
             });
         }
         return data;
     },
     getDataLimit: function(current, pageSize) {
-        var limit = {nodes: [], attention: []},
-            max = current * pageSize,
-            min = max - pageSize,
-            data = this.data;
-        // 提取分屏数据
-        function handle(arr) {
-            var sub = [];
-            arr.forEach(function (node) {
-                if (min <= node.y && node.y < max) {
-                    var n = utils.clone(node);
-                    // 控制分屏渲染偏移
-                    n.y -= min;
-                    sub.push(n);
-                }
-            });
-            return sub;
-        }
+        var data = this.data,
+            pagination = this.opt.pagination,
+            limit = {nodes: [], attention: []};
+        current = current || pagination.current;
+        pageSize = pageSize || pagination.pageSize;
+        var max = current * pageSize;
+        var min = max - pageSize;
         // 点击热图
-        limit.nodes = handle(data.nodes);
+        if (Array.isArray(data.nodes)) {
+            data.nodes.forEach(function (node) {
+                data.nodes.push({
+                    x: node.x,                                  // 坐标: x
+                    y: node.y,                                  // 坐标: y
+                    weight: utils.getNodeWeight(node.weight),   // 权重: 0 - 255
+                    alpha: utils.getNodeAlpha(node.weight),     // 透明度: 0 - 1
+                    radius: node.radius                         // 半径: 默认 40
+                });
+                // 设置边界
+                utils.setBoundaries(node.x, node.y, node.radius, self._boundaries);
+            });
+        }
         // 注意力热图
-        limit.attention = handle(data.attention);
+        if (Array.isArray(originData.attention)) {
+            originData.attention.forEach(function (node) {
+                data.attention.push({
+                    y: node.y,                                           // 坐标: y
+                    height: utils.getNodeHeight.call(self, node.height), // 高度: 默认 40
+                    weight: utils.getNodeWeight(node.weight),            // 权重: 0 - 255
+                    alpha: utils.getNodeAlpha(node.weight),              // 透明度: 0 - 1
+                });
+                // 设置边界
+                utils.setAttentionBoundaries(0, node.y, self.canvas.width,
+                    node.y + node.height, self._attentionBoundaries);
+            });
+        }
         return limit;
     },
     load: function(data) {
@@ -710,7 +780,10 @@ HeatMap.prototype = {
     },
     draw: function() {
         this.clear();
-        view.renderBatch.call(this);                             // 画布
+        // @fix ctx
+        view.render.call(this);                             // 画布
+        this._boundaries = utils.resetBoundaries();         // 重置绘制边界
+        this._attentionBoundaries = utils.resetBoundaries();
     },
     clearMini: function() {
         thumbnail.clear.call(this);

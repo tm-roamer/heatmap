@@ -103,22 +103,20 @@ var handleEvent = {
     scroll: function(event) {
         var heatmap = cache.get(event.currentTarget.getAttribute(CONST.HM_ID) * 1);
         if (heatmap) {
-            var scrollTop = event.currentTarget.scrollTop,
-                pagination = heatmap.opt.pagination;
-            // 切分屏
-            var page = Math.ceil(scrollTop / pagination.pageSize);
-            if (pagination.current != page) {
-                pagination.current = page;
-
-                heatmap.paging(pagination.current, pagination.pageSize);
-
-                // 回调函数
-                // heatmap.opt.onScroll.call(heatmap, event, pagination.current);
-            }
+            // var scrollTop = event.currentTarget.scrollTop,
+            //     pagination = heatmap.opt.pagination;
+            // // 切分屏
+            // var page = Math.ceil(scrollTop / pagination.pageSize);
+            // if (pagination.current != page) {
+            //     pagination.current = page;
+            //     heatmap.paging(pagination.current, pagination.pageSize);
+            // }
             if (heatmap.opt.mini.enabled) {
                 // 移动滑块
                 heatmap.moveSlider(scrollTop);
             }
+            // 回调函数
+            heatmap.opt.onScroll.call(heatmap, event);
         }
     },
     searchUp: function (node, className) {
@@ -137,7 +135,7 @@ var handleEvent = {
         var y  = thumbnail.move.call(this, {y: pageY - offsetY - offset.top});
         // 联动热图画布
         var scale = y / mini.canvas.height;
-        this.outerContainer.scrollTop = scale * this.canvas.height;
+        this.outerContainer.scrollTop = scale * this.opt.maxHeight;
     }
 };
 
