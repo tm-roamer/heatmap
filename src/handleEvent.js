@@ -101,10 +101,21 @@ var handleEvent = {
         }
     },
     scroll: function(event) {
-        // 联动缩略图
         var heatmap = cache.get(event.currentTarget.getAttribute(CONST.HM_ID) * 1);
         if (heatmap) {
-            heatmap.moveSlider(event.currentTarget.scrollTop);
+            var scrollTop = event.currentTarget.scrollTop,
+                pagination = heatmap.opt.pagination;
+            // 切分屏
+            var page = Math.ceil(scrollTop / pagination.pageSize);
+            if (pagination.current != page) {
+                pagination.current = page;
+                // 回调函数
+                heatmap.opt.onScroll.call(heatmap, event, pagination.current);
+            }
+            if (heatmap.opt.mini.enabled) {
+                // 移动滑块
+                heatmap.moveSlider(scrollTop);
+            }
         }
     },
     searchUp: function (node, className) {

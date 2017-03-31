@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="../../dist/heatmap.css"/>
+    <script src="../../dist/heatmap.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+        #mini {
+            position: absolute;
+            left: 900px;
+            top: 10px;
+            width: 110px;
+            height: 300px;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        #heatmap-container {
+            width: 860px;
+            height: 200px;
+            margin-top: 10px;
+            margin-left: 10px;
+            border: 2px solid #323232;
+            border-radius: 5px;
+            overflow: auto;
+        }
+        #heatmap {
+            width: 840px;
+            height: 1000px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 缩略图 -->
+<div id="mini" class="hm-mini-container"></div>
+<!-- 绘制热图画布外容器 -->
+<div id="heatmap-container" class="hm-outer-container">
+    <!-- 绘制热图画布 -->
+    <div id="heatmap" class="hm-container"></div>
+</div>
+
+<script>
+    var options = {
+            container: '#heatmap',
+            outerContainer: '#heatmap-container',
+            mini: {
+                enabled: true,
+                el: '#mini',
+                onDragStart: function(event) {
+                    // console.log('start', this, event);
+                },
+                onDrag: function(event) {
+                    // console.log('drag', this, event);
+                },
+                onDragEnd: function(event) {
+                    // console.log('end', this, event);
+                },
+                onClick: function(event) {
+                    // console.log('click', this, event);
+                }
+            }
+        },
+        data = {
+            nodes: [],
+            lines: [],
+            attention: []
+        };
+
+    var height = document.querySelector('#heatmap-container').scrollHeight;
+
+    // 随机生成节点(点击热图)
+    function generateRandomData(len) {
+        var points = [];
+        var max = 0;
+        var width = 840;
+        var height = height;
+        while (len--) {
+            var weight = Math.floor(Math.random() * 255);
+            var radius = Math.floor(Math.random() * 40);
+            var point = {
+                x: Math.floor(Math.random() * width),
+                y: Math.floor(Math.random() * height),
+                weight: weight,
+                radius: radius
+            };
+            points.push(point);
+        }
+        return points;
+    }
+
+    // 随机生成节点(注意力热图)
+    function generateRandomAttentionData(len) {
+        var points = [];
+        while (len--) {
+            var point = {
+                y: Math.floor(Math.random() * height),
+                weight: Math.floor(Math.random() * 255),
+                height: Math.floor(Math.random() * 200)
+            };
+            points.push(point);
+        }
+        return points;
+    }
+
+    // 300  24ms - 34ms
+    // 7000 80ms - 97ms
+    console.time('heatmap');
+//    data.nodes = generateRandomData(500);
+    data.attention = generateRandomAttentionData(20);
+    heatmap.instance(options, data);
+    console.timeEnd('heatmap');
+</script>
+</body>
+</html>

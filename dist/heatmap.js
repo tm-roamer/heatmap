@@ -52,17 +52,22 @@ var globalConfig = {
         // 0.95: "rgb(255, 255, 0)",
         // 1.0: "rgb(255, 0, 0)"
     },
+    pagination: {
+        current: 1,                                 // 第几块缓存
+        pageSize: 10000,                            // 每块缓存高度
+    },
     mini: {
+        enabled: false,                             // 是否启用缩略图
         sliderMinHeight: 30,                        // 滑块的最小高度
         sliderPaddingTop: 2,                        // 滑块滑到顶部的空隙距离
         sliderPaddingBottom: 2,                     // 滑块滑到底部的空隙距离
-        enabled: true,                              // 是否启用缩略图
         el: '',                                     // 缩略图容器的选择器, 类型: 字符串
         onDragStart: f,                             // 回调监听: 开始拖拽
         onDrag: f,                                  // 回调监听: 拖拽
         onDragEnd: f,                               // 回调监听: 结束拖拽
         onClick: f                                  // 回调监听: 点击
-    }
+    },
+    onScroll: f                                     // 回调监听: 滚动条
 };
 
 // 缓存对象
@@ -566,10 +571,21 @@ var handleEvent = {
         }
     },
     scroll: function(event) {
-        // 联动缩略图
         var heatmap = cache.get(event.currentTarget.getAttribute(CONSTANT.HM_ID) * 1);
         if (heatmap) {
-            heatmap.moveSlider(event.currentTarget.scrollTop);
+            var scrollTop = event.currentTarget.scrollTop,
+                pagination = heatmap.opt.pagination;
+            // 切分屏
+            var page = Math.ceil(scrollTop / pagination.pageSize);
+            if (pagination.current != page) {
+                pagination.current = page;
+                // 回调函数
+                heatmap.opt.onScroll.call(heatmap, event, pagination.current);
+            }
+            if (heatmap.opt.mini.enabled) {
+                // 移动滑块
+                heatmap.moveSlider(scrollTop);
+            }
         }
     },
     searchUp: function (node, className) {
@@ -592,13 +608,12 @@ var handleEvent = {
     }
 };
 
-function HeatMap(options, originData) {
+function HeatMap(options, originData, index) {
     var container = document.querySelector(options.container);
     var outerContainer = document.querySelector(options.outerContainer);
     if (!options.container || !options.outerContainer || !container || !outerContainer) {
         throw new Error ('Invalid HeatMap Container Selector');
     }
-    var index = cache.index();
     container.setAttribute(CONSTANT.HM_ID, index);
     outerContainer.setAttribute(CONSTANT.HM_ID, index);
     this.container = container;                     // 容器DOM
@@ -615,6 +630,7 @@ HeatMap.prototype = {
         this.opt = utils.extend(globalConfig, options); // 配置项
         view.init.call(this);                           // 初始渲染的视图层canvas
         this.data = this.setData(originData);           // 渲染数据
+        this.draw();
         if (this.opt.mini.enabled) {
             this.mini = {
                 ctx: null,
@@ -629,8 +645,8 @@ HeatMap.prototype = {
                 }
             };
             thumbnail.init.call(this);                  // 初始化缩略图
+            this.drawMini();
         }
-        this.draw();
     },
     destroy: function() {
         // 清除监听
@@ -697,19 +713,26 @@ HeatMap.prototype = {
     load: function(data) {
         this.setData(data);
         this.draw();
+        this.opt.mini.enabled && this.drawMini();
     },
     draw: function() {
         this.clear();
         view.render.call(this);                             // 画布
-        thumbnail.render.call(this);                        // 缩略图
         this._boundaries = utils.resetBoundaries();         // 重置绘制边界
         this._attentionBoundaries = utils.resetBoundaries();
     },
     clear: function() {
         view.clear.call(this);
+    },
+    clearMini: function() {
         thumbnail.clear.call(this);
     },
+    drawMini: function() {
+        this.clearMini();
+        thumbnail.render.call(this);
+    },
     moveSlider: function(scrollTop) {
+        if (!this.opt.mini.enabled) return;
         // 联动缩略图滑块
         var scale = scrollTop / this.canvas.height;
         var y = scale * this.mini.canvas.height;
@@ -725,7 +748,7 @@ var heatmap = {
         // 初始化缓存
         cache.init();
         // 初始化实例
-        return cache.set(new HeatMap(options, originData));
+        return cache.set(new HeatMap(options, originData, cache.index()));
     },
     destroy: function (obj) {
         if (obj) {
@@ -734,9 +757,7 @@ var heatmap = {
             obj.destroy();
             obj = null;
         }
-        if (cache.arr == 0) {
-            handleEvent.globalUnbind();
-        }
+        cache.arr == 0 && handleEvent.globalUnbind();
     }
 };
 

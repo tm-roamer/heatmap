@@ -7,13 +7,12 @@ import view from './view';
 import thumbnail from './thumbnail';
 import handleEvent from './handleEvent';
 
-function HeatMap(options, originData) {
+function HeatMap(options, originData, index) {
     var container = document.querySelector(options.container);
     var outerContainer = document.querySelector(options.outerContainer);
     if (!options.container || !options.outerContainer || !container || !outerContainer) {
         throw new Error ('Invalid HeatMap Container Selector');
     }
-    var index = cache.index();
     container.setAttribute(CONST.HM_ID, index);
     outerContainer.setAttribute(CONST.HM_ID, index);
     this.container = container;                     // 容器DOM
@@ -30,6 +29,7 @@ HeatMap.prototype = {
         this.opt = utils.extend(globalConfig, options); // 配置项
         view.init.call(this);                           // 初始渲染的视图层canvas
         this.data = this.setData(originData);           // 渲染数据
+        this.draw();
         if (this.opt.mini.enabled) {
             this.mini = {
                 ctx: null,
@@ -44,8 +44,8 @@ HeatMap.prototype = {
                 }
             };
             thumbnail.init.call(this);                  // 初始化缩略图
+            this.drawMini();
         }
-        this.draw();
     },
     destroy: function() {
         // 清除监听
@@ -112,19 +112,26 @@ HeatMap.prototype = {
     load: function(data) {
         this.setData(data);
         this.draw();
+        this.opt.mini.enabled && this.drawMini();
     },
     draw: function() {
         this.clear();
         view.render.call(this);                             // 画布
-        thumbnail.render.call(this);                        // 缩略图
         this._boundaries = utils.resetBoundaries();         // 重置绘制边界
         this._attentionBoundaries = utils.resetBoundaries();
     },
     clear: function() {
         view.clear.call(this);
+    },
+    clearMini: function() {
         thumbnail.clear.call(this);
     },
+    drawMini: function() {
+        this.clearMini();
+        thumbnail.render.call(this);
+    },
     moveSlider: function(scrollTop) {
+        if (!this.opt.mini.enabled) return;
         // 联动缩略图滑块
         var scale = scrollTop / this.canvas.height;
         var y = scale * this.mini.canvas.height;
@@ -140,7 +147,7 @@ export default {
         // 初始化缓存
         cache.init();
         // 初始化实例
-        return cache.set(new HeatMap(options, originData));
+        return cache.set(new HeatMap(options, originData, cache.index()));
     },
     destroy: function (obj) {
         if (obj) {
@@ -149,8 +156,6 @@ export default {
             obj.destroy();
             obj = null;
         }
-        if (cache.arr == 0) {
-            handleEvent.globalUnbind();
-        }
+        cache.arr == 0 && handleEvent.globalUnbind();
     }
 };
