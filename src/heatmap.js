@@ -105,23 +105,25 @@ HeatMap.prototype = {
             max = current * pageSize,
             min = max - pageSize,
             data = this.data;
-        // 提取分屏数据
-        function handle(arr) {
-            var sub = [];
-            arr.forEach(function (node) {
-                if (min <= node.y && node.y < max) {
-                    var n = utils.clone(node);
-                    // 控制分屏渲染偏移
-                    n.y -= min;
-                    sub.push(n);
-                }
-            });
-            return sub;
-        }
         // 点击热图
-        limit.nodes = handle(data.nodes);
+        data.nodes.forEach(function (node) {
+            // 边界的节点不能一刀切, 展示的节点会被切割, 需要做包含处理
+            if ((min <= node.y || min <= node.y + node.radius)
+                && (node.y <= max || node.y - node.radius <= max)) {
+                var n = utils.clone(node);
+                n.y -= min;     // 控制分屏渲染偏移,
+                limit.nodes.push(n);
+            }
+        });
         // 注意力热图
-        limit.attention = handle(data.attention);
+        data.attention.forEach(function (node) {
+            if ((min <= node.y || min <= node.y + node.height / 2)
+                && (node.y <= max || node.y - node.height / 2 <= max)) {
+                var n = utils.clone(node);
+                n.y -= min;
+                limit.attention.push(n);
+            }
+        });
         return limit;
     },
     load: function(data) {

@@ -23,7 +23,9 @@ export var CONSTANT = {
     HM_MINI_MASK_BOTTOM: 'hm-mini-mask-bottom',     // 缩略图下遮罩classname
     HM_MINI_MASK_LEFT: 'hm-mini-mask-left',         // 缩略图左遮罩classname
     HM_MINI_CANVAS: 'hm-mini-canvas',               // 缩略图画布canvas的classname
-    HM_ID: 'data-hm-id'                             // 标识id
+    HM_ID: 'data-hm-id',                            // 标识id
+    HM_PAGE: 'data-hm-page'                         // 标识分页
+
 };
 
 // 配置项

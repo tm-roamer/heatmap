@@ -98,12 +98,12 @@ var thumbnail = {
     render: function() {
         var mini = this.mini;
         // @fix 规则改了
-        // // 生成缩略图
-        // var computed = utils.getComputedWH(this.container);
-        // mini.ctx.drawImage(this.shadowCanvas, 0, 0, computed.width, computed.height,
-        //     0, 0, mini.canvas.width, mini.canvas.height); // 拉伸图片
-        // // 插入缩略图
-        // mini.container.appendChild(mini.canvas);
+        // 生成缩略图
+        var computed = utils.getComputedWH(this.container);
+        mini.ctx.drawImage(this.shadowCanvas, 0, 0, computed.width, computed.height,
+            0, 0, mini.canvas.width, mini.canvas.height); // 拉伸图片
+        // 插入缩略图
+        mini.container.appendChild(mini.canvas);
     }
 };
 

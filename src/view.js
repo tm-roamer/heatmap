@@ -100,21 +100,17 @@ var view = {
     clear: function () {
         this.shadowCtx.clearRect(0, 0, this.shadowCanvas.width, this.shadowCanvas.height);
         // 清除所有分屏
-        if (Array.isArray(this.splitScreen)) {
-            this.splitScreen.forEach(function(v) {
-                v.ctx.clearRect(0, 0, v.canvas.width, v.canvas.height);
-            });
-        }
+        this.splitScreen.forEach(function(v) {
+            v.ctx.clearRect(0, 0, v.canvas.width, v.canvas.height);
+        });
     },
     // 批量渲染
     renderBatch: function() {
         var self = this;
-        if (Array.isArray(this.splitScreen)) {
-            this.splitScreen.forEach(function(v, i) {
-                var dataLimit = self.getDataLimit(i + 1, self.opt.pagination.pageSize);
-                self.render(dataLimit.nodes, dataLimit.attention, v.ctx);
-            });
-        }
+        this.splitScreen.forEach(function(v, i) {
+            var dataLimit = self.getDataLimit(i + 1, self.opt.pagination.pageSize);
+            view.render.call(self, dataLimit.nodes, dataLimit.attention, v.ctx);
+        });
     },
     // 渲染
     render: function (nodes, attention, ctx) {
@@ -170,20 +166,22 @@ var view = {
             shadowCanvas = this.shadowCanvas;
         var computed = utils.getComputedWH(this.container);
         opt.maxWidth = shadowCanvas.width = computed.width;
-        opt.maxHeight = computed.height;
-        shadowCanvas.height = pagination.pageSize;
-        // @fix
-        while(false) {
-            var canvas = view.createCanvas.call(this, opt.maxWidth, pagination.pageSize);
+        var page = 0,
+            height = opt.maxHeight = computed.height,
+            pageSize = shadowCanvas.height = pagination.pageSize;
+        while(page * pageSize <= height) {
+            page++;
+            var canvas = view.createCanvas.call(this, opt.maxWidth, pagination.pageSize, page).canvas;
             this.container.appendChild(canvas);
         }
     },
-    createCanvas: function(width, height) {
+    createCanvas: function(width, height, page) {
         var splitScreen = this.splitScreen,
             canvas =document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
         canvas.classList.add(CONST.HM_CANVAS);
+        canvas.setAttribute(CONST.HM_PAGE, page);
         return splitScreen[splitScreen.length] = {
             canvas: canvas,
             ctx: canvas.getContext('2d')

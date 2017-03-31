@@ -32,10 +32,7 @@ body.hm-user-select {
 }
 /* 热图画布 */
 .hm-canvas {
-    position:absolute;
-    left:0;
-    top:0;
-    z-index: 1;
+    display: block;
 }
 /* 缩略图的遮罩 */
 .hm-mini-mask {

@@ -27,7 +27,9 @@ var CONSTANT = {
     HM_MINI_MASK_BOTTOM: 'hm-mini-mask-bottom',     // 缩略图下遮罩classname
     HM_MINI_MASK_LEFT: 'hm-mini-mask-left',         // 缩略图左遮罩classname
     HM_MINI_CANVAS: 'hm-mini-canvas',               // 缩略图画布canvas的classname
-    HM_ID: 'data-hm-id'                             // 标识id
+    HM_ID: 'data-hm-id',                            // 标识id
+    HM_PAGE: 'data-hm-page'                         // 标识分页
+
 };
 
 // 配置项
@@ -254,21 +256,17 @@ var view = {
     clear: function () {
         this.shadowCtx.clearRect(0, 0, this.shadowCanvas.width, this.shadowCanvas.height);
         // 清除所有分屏
-        if (Array.isArray(this.splitScreen)) {
-            this.splitScreen.forEach(function(v) {
-                v.ctx.clearRect(0, 0, v.canvas.width, v.canvas.height);
-            });
-        }
+        this.splitScreen.forEach(function(v) {
+            v.ctx.clearRect(0, 0, v.canvas.width, v.canvas.height);
+        });
     },
     // 批量渲染
     renderBatch: function() {
         var self = this;
-        if (Array.isArray(this.splitScreen)) {
-            this.splitScreen.forEach(function(v, i) {
-                var dataLimit = self.getDataLimit(i + 1, self.opt.pagination.pageSize);
-                self.render(dataLimit.nodes, dataLimit.attention, v.ctx);
-            });
-        }
+        this.splitScreen.forEach(function(v, i) {
+            var dataLimit = self.getDataLimit(i + 1, self.opt.pagination.pageSize);
+            view.render.call(self, dataLimit.nodes, dataLimit.attention, v.ctx);
+        });
     },
     // 渲染
     render: function (nodes, attention, ctx) {
@@ -324,20 +322,22 @@ var view = {
             shadowCanvas = this.shadowCanvas;
         var computed = utils.getComputedWH(this.container);
         opt.maxWidth = shadowCanvas.width = computed.width;
-        opt.maxHeight = computed.height;
-        shadowCanvas.height = pagination.pageSize;
-        // @fix
-        while(false) {
-            var canvas = view.createCanvas.call(this, opt.maxWidth, pagination.pageSize);
+        var page = 0,
+            height = opt.maxHeight = computed.height,
+            pageSize = shadowCanvas.height = pagination.pageSize;
+        while(page * pageSize <= height) {
+            page++;
+            var canvas = view.createCanvas.call(this, opt.maxWidth, pagination.pageSize, page).canvas;
             this.container.appendChild(canvas);
         }
     },
-    createCanvas: function(width, height) {
+    createCanvas: function(width, height, page) {
         var splitScreen = this.splitScreen,
             canvas =document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
         canvas.classList.add(CONSTANT.HM_CANVAS);
+        canvas.setAttribute(CONSTANT.HM_PAGE, page);
         return splitScreen[splitScreen.length] = {
             canvas: canvas,
             ctx: canvas.getContext('2d')
@@ -440,12 +440,12 @@ var thumbnail = {
     render: function() {
         var mini = this.mini;
         // @fix 规则改了
-        // // 生成缩略图
-        // var computed = utils.getComputedWH(this.container);
-        // mini.ctx.drawImage(this.shadowCanvas, 0, 0, computed.width, computed.height,
-        //     0, 0, mini.canvas.width, mini.canvas.height); // 拉伸图片
-        // // 插入缩略图
-        // mini.container.appendChild(mini.canvas);
+        // 生成缩略图
+        var computed = utils.getComputedWH(this.container);
+        mini.ctx.drawImage(this.shadowCanvas, 0, 0, computed.width, computed.height,
+            0, 0, mini.canvas.width, mini.canvas.height); // 拉伸图片
+        // 插入缩略图
+        mini.container.appendChild(mini.canvas);
     }
 };
 
@@ -681,23 +681,25 @@ HeatMap.prototype = {
             max = current * pageSize,
             min = max - pageSize,
             data = this.data;
-        // 提取分屏数据
-        function handle(arr) {
-            var sub = [];
-            arr.forEach(function (node) {
-                if (min <= node.y && node.y < max) {
-                    var n = utils.clone(node);
-                    // 控制分屏渲染偏移
-                    n.y -= min;
-                    sub.push(n);
-                }
-            });
-            return sub;
-        }
         // 点击热图
-        limit.nodes = handle(data.nodes);
+        data.nodes.forEach(function (node) {
+            // 边界的节点不能一刀切, 展示的节点会被切割, 需要做包含处理
+            if ((min <= node.y || min <= node.y + node.radius)
+                && (node.y <= max || node.y - node.radius <= max)) {
+                var n = utils.clone(node);
+                n.y -= min;     // 控制分屏渲染偏移,
+                limit.nodes.push(n);
+            }
+        });
         // 注意力热图
-        limit.attention = handle(data.attention);
+        data.attention.forEach(function (node) {
+            if ((min <= node.y || min <= node.y + node.height / 2)
+                && (node.y <= max || node.y - node.height / 2 <= max)) {
+                var n = utils.clone(node);
+                n.y -= min;
+                limit.attention.push(n);
+            }
+        });
         return limit;
     },
     load: function(data) {
