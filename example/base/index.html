@@ -48,6 +48,10 @@
     var options = {
             container: '#heatmap',
             outerContainer: '#heatmap-container',
+            // 滚动监听
+            onScroll: function(event) {
+                console.log(event, this);
+            },
             mini: {
                 enabled: true,
                 el: '#mini',

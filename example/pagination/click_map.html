@@ -30,7 +30,7 @@
         }
         #heatmap {
             width: 840px;
-            height: 21000px;
+            height: 81000px;
         }
     </style>
 </head>
@@ -65,21 +65,18 @@
     }
     // 数据
     var data = {
-        nodes: generateRandomData(500)
+        nodes: generateRandomData(5000)
     };
     // 配置
     var option = {
         container: '#heatmap',
-        outerContainer: '#heatmap-container',
-        // 滚动监听
-        onScroll: function(event) {
-            console.log(event, this);
-        }
+        outerContainer: '#heatmap-container'
     };
 
     // 初始化
-    var hm = heatmap.instance(option, data);
-
+    console.time('heatmap');
+    heatmap.instance(option, data);
+    console.timeEnd('heatmap');
 </script>
 </body>
 </html>

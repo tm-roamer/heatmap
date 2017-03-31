@@ -712,7 +712,7 @@ HeatMap.prototype = {
     },
     draw: function() {
         this.clear();
-        view.renderBatch.call(this);                             // 画布
+        view.renderBatch.call(this);    // 渲染画布
     },
     clearMini: function() {
         thumbnail.clear.call(this);
@@ -732,7 +732,7 @@ HeatMap.prototype = {
 };
 
 var heatmap = {
-    version: "1.0.3",
+    version: "1.0.4",
     instance: function (options, originData) {
         // 初始化监听
         handleEvent.init(true, document.body);
