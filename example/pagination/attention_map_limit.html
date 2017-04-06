@@ -30,7 +30,7 @@
         }
         #heatmap {
             width: 840px;
-            height: 240px;
+            height: 640px;
         }
     </style>
 </head>
@@ -78,7 +78,7 @@
     }
 
     console.time('heatmap');
-    data.attention = generateRandomAttentionData(20);
+    data.attention = generateRandomAttentionData(50);
     heatmap.instance(options, data);
     console.timeEnd('heatmap');
 </script>
