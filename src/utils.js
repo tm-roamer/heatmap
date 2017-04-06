@@ -33,7 +33,7 @@ export default {
         };
         this.throttle(now);
     },
-    getComputedWH(dom) {
+    getComputedWH: function (dom) {
         var computed = getComputedStyle(dom);
         return {
             width: (computed.width.replace(/px/, '')) * 1,

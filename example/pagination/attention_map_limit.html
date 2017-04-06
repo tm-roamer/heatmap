@@ -18,7 +18,6 @@
             height: 300px;
             background-color: #fff;
             border-radius: 5px;
-            display: none;
         }
         #heatmap-container {
             width: 860px;
@@ -31,7 +30,7 @@
         }
         #heatmap {
             width: 840px;
-            height: 21000px;   /* 30屏 4.5s */
+            height: 240px;
         }
     </style>
 </head>
@@ -46,37 +45,41 @@
 </div>
 
 <script>
-    // 随机生成节点(点击热图)
-    function generateRandomData(len) {
+    var options = {
+            container: '#heatmap',
+            outerContainer: '#heatmap-container',
+            pagination: {
+                pageSize: 100
+            },
+            mini: {
+                enabled: true,
+                el: '#mini'
+            }
+        },
+        data = {
+            nodes: [],
+            attention: []
+        };
+
+    var height = document.querySelector('#heatmap-container').scrollHeight;
+
+    // 随机生成节点(注意力热图)
+    function generateRandomAttentionData(len) {
         var points = [];
-        var width = 840;
-        var height = document.querySelector('#heatmap-container').scrollHeight;
         while (len--) {
-            var weight = Math.floor(Math.random() * 255);
-            var radius = Math.floor(Math.random() * 40);
             var point = {
-                x: Math.floor(Math.random() * width),
                 y: Math.floor(Math.random() * height),
-                weight: weight,
-                radius: radius
+                weight: Math.floor(Math.random() * 255),
+                height: Math.floor(Math.random() * 50)
             };
             points.push(point);
         }
         return points;
     }
-    // 数据
-    var data = {
-        nodes: generateRandomData(7000)
-    };
-    // 配置
-    var option = {
-        container: '#heatmap',
-        outerContainer: '#heatmap-container'
-    };
 
-    // 初始化
     console.time('heatmap');
-    heatmap.instance(option, data);
+    data.attention = generateRandomAttentionData(20);
+    heatmap.instance(options, data);
     console.timeEnd('heatmap');
 </script>
 </body>

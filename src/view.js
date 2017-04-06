@@ -115,10 +115,14 @@ var view = {
     // 渲染
     render: function (nodes, attention, ctx) {
         var tpl, self = this,
+            shadowCanvas = this.shadowCanvas,
             shadowCtx = this.shadowCtx,
             nodeBlur = this.opt.nodeBlur;
         nodes = nodes || this.data.nodes;
         attention = attention || this.data.attention;
+        // 清除画布
+        shadowCtx.clearRect(0, 0, shadowCanvas.width, shadowCanvas.height);
+        shadowCtx.globalAlpha = 1;
         // 点击热图
         if (Array.isArray(nodes) && nodes.length > 0) {
             nodes.forEach(function(node) {
@@ -160,24 +164,44 @@ var view = {
         this._templates = {};                               // 根据节点半径, 缓存节点模板
         this._attentionTemplates = {};                      // 根据节点高度, 缓存节点模板
         this.container.classList.add(CONST.HM_CONTAINER);
-        // 循环添加分屏
+        // 添加分屏
         var opt = this.opt,
             pagination = opt.pagination,
-            shadowCanvas = this.shadowCanvas;
-        var computed = utils.getComputedWH(this.container);
+            shadowCanvas = this.shadowCanvas,
+            computed = utils.getComputedWH(this.container);
+        // 设置宽和高
         opt.maxWidth = shadowCanvas.width = computed.width;
-        var page = 0,
-            height = opt.maxHeight = computed.height,
-            pageSize = shadowCanvas.height = pagination.pageSize;
-        while(page * pageSize <= height) {
-            page++;
-            var canvas = view.createCanvas.call(this, opt.maxWidth, pagination.pageSize, page).canvas;
+        // shadowCanvas.height = pagination.pageSize;
+        // 总高度
+        opt.maxHeight = opt.maxHeight < computed.height ? computed.height : opt.maxHeight;
+        var maxPageSize = shadowCanvas.height = opt.maxHeight;
+        // 只有一页的情况
+        var canvas;
+        if (pagination.currentPage * pagination.pageSize  > maxPageSize) {
+            canvas = view.createCanvas.call(this, opt.maxWidth,
+                maxPageSize, pagination.currentPage).canvas;
             this.container.appendChild(canvas);
+        } else {
+            // 总页数
+            var maxPage = Math.floor(maxPageSize % pagination.pageSize === 0
+                ? maxPageSize / pagination.pageSize
+                : maxPageSize / pagination.pageSize + 1);
+            // pagination.currentPage * pagination.pageSize <= maxPageSize
+            while (pagination.currentPage <= maxPage) {
+                // 最后一页的情况高度
+                var pageSize = pagination.currentPage === maxPage
+                    ? maxPageSize - (pagination.currentPage -1) * pagination.pageSize
+                    : pagination.pageSize;
+                canvas = view.createCanvas.call(this, opt.maxWidth,
+                    pageSize, pagination.currentPage).canvas;
+                this.container.appendChild(canvas);
+                pagination.currentPage++;
+            }
         }
     },
     createCanvas: function(width, height, page) {
         var splitScreen = this.splitScreen,
-            canvas =document.createElement('canvas');
+            canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
         canvas.classList.add(CONST.HM_CANVAS);

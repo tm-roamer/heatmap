@@ -31,7 +31,7 @@
         }
         #heatmap {
             width: 840px;
-            height: 21000px;   /* 30屏 4.5s */
+            height: 210px;   /* 30屏 4.5s */
         }
     </style>
 </head>
@@ -53,7 +53,7 @@
         var height = document.querySelector('#heatmap-container').scrollHeight;
         while (len--) {
             var weight = Math.floor(Math.random() * 255);
-            var radius = Math.floor(Math.random() * 40);
+            var radius = Math.floor(Math.random() * 50);
             var point = {
                 x: Math.floor(Math.random() * width),
                 y: Math.floor(Math.random() * height),
@@ -66,12 +66,15 @@
     }
     // 数据
     var data = {
-        nodes: generateRandomData(7000)
+        nodes: generateRandomData(30)
     };
     // 配置
     var option = {
         container: '#heatmap',
-        outerContainer: '#heatmap-container'
+        outerContainer: '#heatmap-container',
+        pagination: {
+            pageSize: 100
+        }
     };
 
     // 初始化

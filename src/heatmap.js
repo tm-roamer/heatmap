@@ -28,8 +28,8 @@ HeatMap.prototype = {
         this._number = index;                           // 编号
         this.opt = utils.extend(globalConfig, options); // 配置项
         this.splitScreen = [];                          // 配置分屏数组
-        view.init.call(this);                           // 初始渲染的视图层canvas
         this.data = this.setData(originData);           // 渲染数据
+        view.init.call(this);                           // 初始渲染的视图层canvas
         this.draw();
         if (this.opt.mini.enabled) {
             this.mini = {
@@ -72,30 +72,37 @@ HeatMap.prototype = {
     },
     setData: function (originData) {
         var self = this,
+            opt = this.opt,
             data = {nodes: [], attention: []};
         if (!originData) return data;
         this.originData = originData;                   // 缓存原始数据
         // 点击热图
         if (Array.isArray(originData.nodes)) {
             originData.nodes.forEach(function (node) {
-                data.nodes.push({
+                var n = {
                     x: node.x,                                  // 坐标: x
                     y: node.y,                                  // 坐标: y
                     weight: utils.getNodeWeight(node.weight),   // 权重: 0 - 255
                     alpha: utils.getNodeAlpha(node.weight),     // 透明度: 0 - 1
                     radius: node.radius                         // 半径: 默认 40
-                });
+                };
+                data.nodes.push(n);
+                if (opt.maxHeight < n.y + n.radius)
+                    opt.maxHeight = n.y + n.radius;
             });
         }
         // 注意力热图
         if (Array.isArray(originData.attention)) {
             originData.attention.forEach(function (node) {
-                data.attention.push({
+                var n = {
                     y: node.y,                                           // 坐标: y
                     height: utils.getNodeHeight.call(self, node.height), // 高度: 默认 40
                     weight: utils.getNodeWeight(node.weight),            // 权重: 0 - 255
                     alpha: utils.getNodeAlpha(node.weight),              // 透明度: 0 - 1
-                });
+                };
+                data.attention.push(n);
+                if (opt.maxHeight < n.y + n.height)
+                    opt.maxHeight = n.y + n.height;
             });
         }
         return data;

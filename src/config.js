@@ -30,6 +30,8 @@ export var CONSTANT = {
 
 // 配置项
 export var globalConfig = {
+    maxWidth: 0,                                    // 最大宽度
+    maxHeight: 0,                                   // 最大高度
     container: null,                                // 画布容器
     outerContainer: null,                           // 画布容器的容器, 主要用来控制缩略图和热图之间的联动
     scale: 1,                                       // 缩放比
@@ -50,7 +52,7 @@ export var globalConfig = {
         // 1.0: "rgb(255, 0, 0)"
     },
     pagination: {
-        current: 1,                                 // 第几块缓存
+        currentPage: 1,                             // 第几块缓存
         pageSize: 10000,                            // 每块缓存高度
     },
     mini: {

@@ -19,9 +19,7 @@ heatmap.js is a plugin for canvas chart 一个基于canvas的绘制热图插件
 ### 渲染原理
 
     1. 为什么要分屏加载 ?
-        当canvas超过尺寸限定将无法绘制 mac chrome 56 测试的canvas极限尺寸约为 宽840px*32000px, 
-        32000啥概念呢? 淘宝首页的高度约是9000px, 类似无限滚动加载的网页是存在的, 有必要去解决它. 
-        解决方案: 通过多个canvas来分屏渲染数据. 
+        win10下的火狐浏览器canvas图层最高支持32766像素，win10下谷歌浏览器最高canvas图层支持32767像素。
  
 ### 更新日志
 

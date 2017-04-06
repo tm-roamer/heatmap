@@ -103,16 +103,9 @@ var handleEvent = {
     scroll: function(event) {
         var heatmap = cache.get(event.currentTarget.getAttribute(CONST.HM_ID) * 1);
         if (heatmap) {
-            // var scrollTop = event.currentTarget.scrollTop,
-            //     pagination = heatmap.opt.pagination;
-            // // 切分屏
-            // var page = Math.ceil(scrollTop / pagination.pageSize);
-            // if (pagination.current != page) {
-            //     pagination.current = page;
-            //     heatmap.paging(pagination.current, pagination.pageSize);
-            // }
+            // 移动滑块
             if (heatmap.opt.mini.enabled) {
-                // 移动滑块
+                var scrollTop = event.currentTarget.scrollTop;
                 heatmap.moveSlider(scrollTop);
             }
             // 回调函数
