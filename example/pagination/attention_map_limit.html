@@ -30,7 +30,7 @@
         }
         #heatmap {
             width: 840px;
-            height: 640px;
+            height: 2640px;
         }
     </style>
 </head>
@@ -49,7 +49,7 @@
             container: '#heatmap',
             outerContainer: '#heatmap-container',
             pagination: {
-                pageSize: 100
+                pageSize: 1000
             },
             mini: {
                 enabled: true,
@@ -70,7 +70,7 @@
             var point = {
                 y: Math.floor(Math.random() * height),
                 weight: Math.floor(Math.random() * 255),
-                height: Math.floor(Math.random() * 50)
+                height: Math.floor(Math.random() * 150)
             };
             points.push(point);
         }
@@ -78,7 +78,7 @@
     }
 
     console.time('heatmap');
-    data.attention = generateRandomAttentionData(50);
+    data.attention = generateRandomAttentionData(150);
     heatmap.instance(options, data);
     console.timeEnd('heatmap');
 </script>
