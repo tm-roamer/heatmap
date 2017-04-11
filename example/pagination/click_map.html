@@ -18,7 +18,6 @@
             height: 300px;
             background-color: #fff;
             border-radius: 5px;
-            display: none;
         }
         #heatmap-container {
             width: 860px;
@@ -31,7 +30,7 @@
         }
         #heatmap {
             width: 840px;
-            height: 21000px;   /* 30屏 4.5s */
+            height: 2000px;   /* 30屏 4.5s */
         }
     </style>
 </head>
@@ -66,12 +65,19 @@
     }
     // 数据
     var data = {
-        nodes: generateRandomData(7000)
+        nodes: generateRandomData(500)
     };
     // 配置
     var option = {
         container: '#heatmap',
-        outerContainer: '#heatmap-container'
+        outerContainer: '#heatmap-container',
+        mini: {
+            enabled: true,
+            el: '#mini'
+        },
+        pagination: {
+            pageSize: 1000
+        }
     };
 
     // 初始化

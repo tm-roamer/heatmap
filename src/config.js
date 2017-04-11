@@ -57,10 +57,10 @@ export var globalConfig = {
     },
     mini: {
         enabled: false,                             // 是否启用缩略图
+        el: '',                                     // 缩略图容器的选择器, 类型: 字符串
         sliderMinHeight: 30,                        // 滑块的最小高度
         sliderPaddingTop: 2,                        // 滑块滑到顶部的空隙距离
         sliderPaddingBottom: 2,                     // 滑块滑到底部的空隙距离
-        el: '',                                     // 缩略图容器的选择器, 类型: 字符串
         onDragStart: f,                             // 回调监听: 开始拖拽
         onDrag: f,                                  // 回调监听: 拖拽
         onDragEnd: f,                               // 回调监听: 结束拖拽
